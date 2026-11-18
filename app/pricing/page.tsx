@@ -89,8 +89,8 @@ export default async function PricingPage() {
           <tbody>
             {(Object.keys(MODELS) as ModelKey[]).map((k) => (
               <tr key={k}>
-                <td>
-                  {MODELS[k].he} <small dir="ltr">{MODELS[k].name}</small>
+                <td dir="ltr" className="cell-start">
+                  {MODELS[k].name} <small>{MODELS[k].resolution}</small>
                 </td>
                 <td>{MODELS[k].note}</td>
                 <td>{CREDITS_PER_CLIP[k]}</td>

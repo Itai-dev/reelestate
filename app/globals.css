@@ -1384,3 +1384,7 @@ main + .site-foot {
 .app {
   padding-bottom: 48px;
 }
+
+.credit-table .cell-start {
+  text-align: right;
+}

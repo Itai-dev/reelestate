@@ -138,35 +138,62 @@ export function buildPrompt(s: ShotPromptInput): string {
     .join(" ");
 }
 
-export type ModelKey = "fast" | "quality" | "premium";
+export type Family = "seedance" | "wan";
+export type Resolution = "720p" | "1080p";
+export type ModelKey = "seedance720" | "seedance1080" | "wan720" | "wan1080";
+
+export const FAMILIES: Record<Family, { name: string; note: string }> = {
+  seedance: { name: "Seedance 2.5", note: "הכי מציאותי. יקר, ולוקח כמה דקות לקליפ." },
+  wan: { name: "Wan 3.0", note: "זול פי 4–5 ומהיר יותר. טוב לטיוטות ולהשוואה." },
+};
 
 // Prices are fal.ai list prices for one 5-second clip without audio (Nov 2026).
 export const MODELS: Record<
   ModelKey,
-  { endpoint: string; he: string; name: string; note: string; pricePerClip: number }
+  { family: Family; resolution: Resolution; endpoint: string; he: string; name: string; note: string; pricePerClip: number }
 > = {
-  fast: {
-    endpoint: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
-    he: "מהיר",
-    name: "Kling 2.5 Turbo",
-    note: "טוב לטיוטות ולכמויות",
-    pricePerClip: 0.35,
+  seedance720: {
+    family: "seedance",
+    resolution: "720p",
+    endpoint: "bytedance/seedance-2.5/image-to-video",
+    he: "Seedance 720p",
+    name: "Seedance 2.5",
+    note: "ברירת המחדל. מספיק לרשתות",
+    pricePerClip: 2.37,
   },
-  quality: {
-    endpoint: "fal-ai/kling-video/v3/pro/image-to-video",
-    he: "איכותי",
-    name: "Kling 3.0 Pro",
-    note: "תנועת מצלמה נקייה, ברירת מחדל",
-    pricePerClip: 0.56,
+  seedance1080: {
+    family: "seedance",
+    resolution: "1080p",
+    endpoint: "bytedance/seedance-2.5/image-to-video",
+    he: "Seedance 1080p",
+    name: "Seedance 2.5",
+    note: "הכי חד, לאתר ולמסכים גדולים",
+    pricePerClip: 5.82,
   },
-  premium: {
-    endpoint: "bytedance/seedance-2.0/image-to-video",
-    he: "פרימיום",
-    name: "Seedance 2.0",
-    note: "הכי מציאותי, יקר פי 3",
-    pricePerClip: 1.52,
+  wan720: {
+    family: "wan",
+    resolution: "720p",
+    endpoint: "alibaba/wan-3.0/image-to-video",
+    he: "Wan 720p",
+    name: "Wan 3.0",
+    note: "זול ומהיר, לטיוטות",
+    pricePerClip: 0.5,
+  },
+  wan1080: {
+    family: "wan",
+    resolution: "1080p",
+    endpoint: "alibaba/wan-3.0/image-to-video",
+    he: "Wan 1080p",
+    name: "Wan 3.0",
+    note: "זול, חד",
+    pricePerClip: 1.0,
   },
 };
+
+export const modelKeyOf = (family: Family, resolution: Resolution) =>
+  `${family}${resolution === "720p" ? "720" : "1080"}` as ModelKey;
+
+export const DEFAULT_MODEL: ModelKey = "seedance720";
 
 export const CLIP_SECONDS = 5;
 

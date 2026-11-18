@@ -28,30 +28,29 @@ export function isModelKey(v: unknown): v is ModelKey {
   return typeof v === "string" && v in MODELS;
 }
 
-// Each model names its inputs a little differently.
+// Each model names its inputs a little differently. Both get a frame that is
+// already cropped to the output format, so the aspect ratio follows the image.
 export function modelInput(key: ModelKey, imageUrl: string, prompt: string) {
-  const duration = "5";
-  switch (key) {
-    case "fast":
-      return { prompt, image_url: imageUrl, duration, negative_prompt: NEGATIVE_PROMPT, cfg_scale: 0.5 };
-    case "quality":
-      return {
-        prompt,
-        start_image_url: imageUrl,
-        duration,
-        generate_audio: false,
-        negative_prompt: NEGATIVE_PROMPT,
-      };
-    case "premium":
-      return {
-        prompt,
-        image_url: imageUrl,
-        duration,
-        resolution: "720p",
-        aspect_ratio: "auto",
-        generate_audio: false,
-      };
+  const m = MODELS[key];
+  if (m.family === "seedance") {
+    return {
+      prompt,
+      image_url: imageUrl,
+      duration: "5",
+      resolution: m.resolution,
+      aspect_ratio: "auto",
+      generate_audio: false,
+    };
   }
+  return {
+    prompt: `${prompt} Avoid: ${NEGATIVE_PROMPT}.`,
+    start_image_url: imageUrl,
+    duration: 5,
+    resolution: m.resolution,
+    aspect_ratio: "adaptive",
+    audio: false,
+    enable_prompt_expansion: false,
+  };
 }
 
 export function errorMessage(e: unknown): string {

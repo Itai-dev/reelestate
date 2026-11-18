@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ASPECTS,
+  DEFAULT_MODEL,
+  FAMILIES,
   MODELS,
+  modelKeyOf,
+  type Family,
+  type Resolution,
   PACES,
   ROOMS,
   type Aspect,
-  type ModelKey,
   type Pace,
 } from "@/lib/presets";
 import Link from "next/link";
@@ -33,7 +37,7 @@ import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from
 type Saved = { shots: Shot[]; info: Info; settings: Settings; musicName?: string };
 
 const DEFAULT_INFO: Info = { name: "", location: "", price: "", cta: "", phone: "", brand: "#1d2a3a" };
-const DEFAULT_SETTINGS: Settings = { aspect: "9:16", layout: "full", pace: "calm", model: "quality", labels: true };
+const DEFAULT_SETTINGS: Settings = { aspect: "9:16", layout: "full", pace: "calm", model: DEFAULT_MODEL, labels: true };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const BUSY = new Set(["preparing", "queued", "rendering"]);
@@ -81,10 +85,19 @@ export default function Studio() {
             if (s.videoUrl) downloadedFrom.current.set(s.id, s.videoUrl);
           }
         }
-        setShots(saved.shots.filter((s) => m[s.id]).map((s) => (s.status === "preparing" ? { ...s, status: "idle" } : s)));
+        // older saves may name models that no longer exist
+        setShots(
+          saved.shots
+            .filter((s) => m[s.id])
+            .map((s) =>
+              s.status === "preparing" || (BUSY.has(s.status) && !(s.modelKey && s.modelKey in MODELS)) ? { ...s, status: "idle" } : s,
+            ),
+        );
         setMedia(m);
         setInfo({ ...DEFAULT_INFO, ...saved.info });
-        setSettings({ ...DEFAULT_SETTINGS, ...saved.settings });
+        const st = { ...DEFAULT_SETTINGS, ...saved.settings };
+        if (!(st.model in MODELS)) st.model = DEFAULT_MODEL;
+        setSettings(st);
         const lg = await load<Blob>("logo");
         if (lg) setLogo({ blob: lg, url: URL.createObjectURL(lg) });
         const mu = await load<Blob>("music");
@@ -570,22 +583,41 @@ export default function Studio() {
             </div>
 
             {live && (
-              <fieldset className="models">
-                <legend>מודל וידאו</legend>
-                {(Object.keys(MODELS) as ModelKey[]).map((k) => (
-                  <label key={k} className="model">
-                    <input type="radio" name="model" checked={settings.model === k} onChange={() => setSettings({ ...settings, model: k })} />
-                    <span className="model-name">
-                      {MODELS[k].he} <small dir="ltr">{MODELS[k].name}</small>
-                    </span>
-                    <span className="model-note">{MODELS[k].note}</span>
-                    <span className="model-price">
-                      {accounts ? `${CREDITS_PER_CLIP[k]} קר׳` : <span dir="ltr">${MODELS[k].pricePerClip.toFixed(2)}</span>}
-                    </span>
-                  </label>
-                ))}
-                <p className="fine">{accounts ? "קרדיטים לקליפ של 5 שניות." : "מחיר לקליפ של 5 שניות, לפי המחירון של fal.ai."}</p>
-              </fieldset>
+              <>
+                <div className="field">
+                  <span>מודל וידאו</span>
+                  <div className="seg">
+                    {(Object.keys(FAMILIES) as Family[]).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        aria-pressed={MODELS[settings.model].family === f}
+                        onClick={() => setSettings({ ...settings, model: modelKeyOf(f, MODELS[settings.model].resolution) })}
+                      >
+                        <b dir="ltr">{FAMILIES[f].name}</b>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="fine">{FAMILIES[MODELS[settings.model].family].note}</p>
+                </div>
+                <div className="field">
+                  <span>רזולוציה</span>
+                  <div className="seg">
+                    {(["720p", "1080p"] as Resolution[]).map((r) => {
+                      const k = modelKeyOf(MODELS[settings.model].family, r);
+                      return (
+                        <button key={r} type="button" aria-pressed={settings.model === k} onClick={() => setSettings({ ...settings, model: k })}>
+                          <b dir="ltr">{r}</b>
+                          <small>
+                            {accounts ? `${CREDITS_PER_CLIP[k]} קרדיטים לקליפ` : <span dir="ltr">${MODELS[k].pricePerClip.toFixed(2)} לקליפ</span>}
+                          </small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="fine">קליפ של 5 שניות לכל חלל.</p>
+                </div>
+              </>
             )}
           </section>
         </aside>

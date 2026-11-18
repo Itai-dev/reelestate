@@ -12,42 +12,43 @@ export const PLANS: Record<
 > = {
   starter: {
     name: "סוכן",
-    price: 149,
-    credits: 60,
+    price: 349,
+    credits: 90,
     who: "לסוכן שמשווק כמה נכסים בחודש",
-    perks: ["60 קרדיטים בחודש", "כל הפורמטים: רילס, פיד, אתר", "לוגו, מחיר וטלפון על הסרטון"],
+    perks: ["90 קרדיטים בחודש", "כל הפורמטים: רילס, פיד, אתר", "לוגו, מחיר וטלפון על הסרטון"],
   },
   pro: {
     name: "משרד",
-    price: 349,
-    credits: 160,
+    price: 790,
+    credits: 210,
     who: "למשרד תיווך עם כמה סוכנים",
-    perks: ["160 קרדיטים בחודש", "כל מה שבמסלול סוכן", "מודל פרימיום לנכסי יוקרה"],
+    perks: ["210 קרדיטים בחודש", "כל מה שבמסלול סוכן", "1080p לאתר ולמסכים גדולים"],
     featured: true,
   },
   studio: {
     name: "יזם",
-    price: 790,
-    credits: 400,
+    price: 1690,
+    credits: 480,
     who: "ליזמים ולמשווקי פרויקטים",
-    perks: ["400 קרדיטים בחודש", "כל מה שבמסלול משרד", "עדיפות בתמיכה"],
+    perks: ["480 קרדיטים בחודש", "כל מה שבמסלול משרד", "עדיפות בתמיכה"],
   },
 };
 
 export const PACKS: Record<PackId, { name: string; price: number; credits: number }> = {
-  pack30: { name: "30 קרדיטים", price: 99, credits: 30 },
-  pack100: { name: "100 קרדיטים", price: 290, credits: 100 },
+  pack30: { name: "30 קרדיטים", price: 129, credits: 30 },
+  pack100: { name: "100 קרדיטים", price: 390, credits: 100 },
 };
 
-// Credits charged for one 5-second clip, by model. One credit ≈ $0.28–0.35 of AI cost.
+// Credits charged for one 5-second clip. One credit ≈ $0.47–0.50 of AI cost.
 export const CREDITS_PER_CLIP: Record<ModelKey, number> = {
-  fast: 1,
-  quality: 2,
-  premium: 5,
+  seedance720: 5,
+  seedance1080: 12,
+  wan720: 1,
+  wan1080: 2,
 };
 
-// A typical reel: about 6 spaces in the quality model.
-export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.quality;
+// A typical reel: about 6 spaces in Seedance 2.5 at 720p.
+export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.seedance720;
 
 export const PERIOD_DAYS = 31;
 
