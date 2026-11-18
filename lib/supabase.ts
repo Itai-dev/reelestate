@@ -7,7 +7,8 @@ import { cookies } from "next/headers";
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const authConfigured = () => Boolean(URL && ANON);
+// Accounts switch on only when the server can also write (service role key).
+export const authConfigured = () => Boolean(URL && ANON && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Per-request client that reads and refreshes the signed-in user's session cookie.
 export async function supabaseServer() {
