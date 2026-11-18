@@ -3651,3 +3651,156 @@ h2,
   font-size: 13px;
   padding: 6px 12px;
 }
+
+/* ---------- one-line changes ---------- */
+.changebar {
+  background: var(--ink);
+  color: var(--ivory);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.changebar h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.cb-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--ivory);
+  border-radius: 999px;
+  padding: 5px;
+  padding-inline-start: 18px;
+}
+
+.cb-form input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 16px;
+  min-height: 44px;
+}
+
+.cb-form input:focus {
+  outline: none;
+}
+
+.cb-mic,
+.cb-send {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: transform 0.18s var(--out), background 0.2s;
+}
+
+.cb-mic {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.cb-mic.is-on {
+  background: var(--copper);
+  color: #fff;
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.cb-send {
+  background: var(--ink);
+  color: var(--ivory);
+}
+
+.cb-send:disabled {
+  opacity: 0.35;
+}
+
+.cb-mic:active,
+.cb-send:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+.cb-mic svg,
+.cb-send svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cb-log {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.cb-log li {
+  display: grid;
+  gap: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(251, 249, 244, 0.14);
+  font-size: 14px;
+}
+
+.cb-log b {
+  font-weight: 500;
+}
+
+.cb-log span {
+  color: rgba(251, 249, 244, 0.7);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cb-log .link {
+  color: var(--ivory);
+}
+
+.cb-log .is-error span {
+  color: #ffb4a6;
+}
+
+.cb-log .thinking-line {
+  color: var(--ivory);
+}
+
+.texts .field {
+  margin-bottom: 12px;
+}
+
+.texts-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.texts-row img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.texts-row input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d5cdbd;
+  border-radius: 12px;
+  background: #fff;
+}

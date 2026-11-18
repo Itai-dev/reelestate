@@ -15,6 +15,7 @@ export type Shot = {
   imgW: number;
   imgH: number;
   customPrompt?: string;
+  caption?: string; // the on-screen line for this space
   status: ShotStatus;
   position?: number;
   error?: string;
@@ -35,6 +36,7 @@ export type Settings = {
   pace: Pace;
   model: ModelKey;
   labels: boolean;
+  textStyle?: "bold" | "calm";
 };
 
 export type Info = ReelInfo;

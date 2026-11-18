@@ -3,13 +3,14 @@
 // records it to a video file in the browser.
 import { coverRect } from "./image";
 import { MOTIONS, type MotionId } from "./presets";
-import { gradeFilter, gradeWash, inkOn, type Grade } from "./brand";
+import { gradeFilter, gradeWash, inkOn, luminance, type Grade } from "./brand";
 
 export type ReelClip = {
   photo: HTMLCanvasElement; // the photo, already cropped to the output frame
   video?: HTMLVideoElement; // the AI clip, when one exists
   motion: MotionId;
   label: string;
+  caption?: string;
 };
 
 export type ReelInfo = {
@@ -20,6 +21,7 @@ export type ReelInfo = {
   phone: string;
   brand: string;
   website?: string;
+  hook?: string;
 };
 
 // The brand's look on the reel: its fonts, accent colour and colour grade.
@@ -35,6 +37,7 @@ export type ReelSpec = {
   labels: boolean;
   clipSeconds: number;
   look?: ReelLook;
+  textStyle?: "bold" | "calm";
 };
 
 export const FONT_DISPLAY = '"Bellefair", "Frank Ruhl Libre", serif';
@@ -77,7 +80,7 @@ export class Reel {
     this.tall = spec.height / spec.width > 1.5;
     this.fDisplay = spec.look?.heading ?? FONT_DISPLAY;
     this.fUi = spec.look?.body ?? FONT_UI;
-    this.accent = spec.look?.accent ?? "rgba(255,255,255,0.9)";
+    this.accent = spec.look?.accent ?? "#1d1c19";
     this.filter = spec.look?.grade ? gradeFilter(spec.look.grade) : null;
     this.wash = spec.look?.grade ? gradeWash(spec.look.grade) : null;
     let t = 0;
@@ -245,6 +248,81 @@ export class Reel {
     return h;
   }
 
+  // ---------- social typography ----------
+
+  // Where text may sit: platforms cover the top and bottom of vertical video.
+  private safe() {
+    const H = this.spec.height;
+    return this.tall ? { top: H * 0.12, bottom: H * 0.76 } : { top: H * 0.07, bottom: H * 0.9 };
+  }
+
+  private wrap(str: string, px: number, weight: number, font: string, maxW: number, maxLines = 3) {
+    const { ctx } = this;
+    ctx.font = `${weight} ${px}px ${font}`;
+    const words = str.trim().split(/\s+/);
+    const out: string[] = [];
+    let line = "";
+    for (const w of words) {
+      const next = line ? `${line} ${w}` : w;
+      if (ctx.measureText(next).width > maxW && line) {
+        out.push(line);
+        line = w;
+      } else line = next;
+    }
+    if (line) out.push(line);
+    return out.slice(0, maxLines);
+  }
+
+  // A block of text on a coloured plate (bold) or with a soft shadow (calm).
+  private textBlock(
+    lines: string[],
+    opts: { x: number; y: number; px: number; weight: number; font: string; align: "right" | "center"; plate?: string; ink: string; lead?: number },
+  ) {
+    const { ctx, u } = this;
+    const lead = opts.lead ?? 1.18;
+    ctx.font = `${opts.weight} ${opts.px}px ${opts.font}`;
+    const widths = lines.map((l) => ctx.measureText(l).width);
+    const lh = opts.px * lead;
+    let y = opts.y;
+    lines.forEach((l, i) => {
+      const w = widths[i];
+      const padX = opts.px * 0.42;
+      const padY = opts.px * 0.2;
+      const right = opts.align === "right" ? opts.x : opts.x + w / 2;
+      if (opts.plate) {
+        ctx.fillStyle = opts.plate;
+        ctx.beginPath();
+        ctx.roundRect(right - w - padX, y - opts.px * 0.92 - padY, w + padX * 2, opts.px * 1.12 + padY * 2, 0.9 * u);
+        ctx.fill();
+      }
+      this.text(l, opts.align === "right" ? opts.x : opts.x, y, opts.px, {
+        font: opts.font,
+        weight: opts.weight,
+        align: opts.align,
+        color: opts.ink,
+        shadow: !opts.plate,
+      });
+      y += lh + (opts.plate ? opts.px * 0.34 : 0);
+    });
+    return y;
+  }
+
+  private logoPlate(right: number, top: number, maxW: number, maxH: number, bg = "rgba(251,249,244,0.94)") {
+    const logo = this.spec.logo;
+    if (!logo) return 0;
+    const { ctx, u } = this;
+    const k = Math.min(maxW / logo.width, maxH / logo.height);
+    const w = logo.width * k;
+    const h = logo.height * k;
+    const pad = 1.6 * u;
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.roundRect(right - w - pad * 2, top, w + pad * 2, h + pad * 2, 1.4 * u);
+    ctx.fill();
+    ctx.drawImage(logo, right - w - pad, top + pad, w, h);
+    return h + pad * 2;
+  }
+
   private renderFull(t: number) {
     const { ctx, spec, u } = this;
     const W = spec.width;
@@ -254,53 +332,91 @@ export class Reel {
       this.drawMedia(a.seg, a.local, 0, 0, W, H);
     }
     ctx.globalAlpha = 1;
+    if (t >= this.endStart + XF) return;
 
-    const right = W - 7 * u;
-    const base = this.tall ? H * 0.75 : H - 9 * u;
     const info = spec.info;
+    const bold = (spec.textStyle ?? "bold") === "bold";
+    const accent = this.accent;
+    const plateInk = inkOn(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#000000");
+    const sf = this.safe();
+    const m = 6 * u;
+    const right = W - m;
+    const maxW = W - 2 * m;
+    const hook = (info.hook || info.name || "").trim();
+    const hookEnd = hook ? INTRO_END : 0;
 
-    // soft shade behind text
-    const shade = Math.max(
-      info.name || info.location ? windowed(t, 0.2, INTRO_END, 0.6) : 0,
-      spec.labels ? 0.55 : 0,
-    );
-    if (shade > 0 && t < this.endStart + XF) {
-      const g = ctx.createLinearGradient(0, H * 0.5, 0, H);
-      g.addColorStop(0, "rgba(0,0,0,0)");
-      g.addColorStop(1, `rgba(0,0,0,${0.55 * shade})`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, H * 0.5, W, H * 0.5);
-    }
+    // gentle shade at the bottom so lines read on any frame
+    const g = ctx.createLinearGradient(0, H * 0.45, 0, H);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, `rgba(0,0,0,${bold ? 0.35 : 0.5})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * 0.45, W, H * 0.55);
 
-    if (spec.logo && t < this.endStart) {
-      ctx.globalAlpha = 0.92 * clamp((this.endStart - t) / 0.4);
-      this.drawLogo(right, this.tall ? H * 0.08 : 6 * u, 18 * u, 7 * u, "right");
+    if (spec.logo) {
+      ctx.globalAlpha = clamp((this.endStart - t) / 0.4);
+      this.logoPlate(right, sf.top, 22 * u, 6 * u);
       ctx.globalAlpha = 1;
     }
 
-    // intro title
-    const k = windowed(t, 0.3, INTRO_END, 0.6);
-    if (k > 0 && (info.name || info.location)) {
+    // the hook: the first thing seen
+    const k = windowed(t, 0.15, hookEnd, 0.45);
+    if (k > 0 && hook) {
       ctx.globalAlpha = k;
-      const lift = (1 - ease(k)) * 2 * u;
-      if (info.name)
-        this.text(info.name, right, base - 4.6 * u + lift, 8.4 * u, { font: this.fDisplay, maxW: W - 14 * u, shadow: true });
-      if (info.location)
-        this.text(info.location, right, base + 0.6 * u + lift, 3.4 * u, { weight: 400, color: "rgba(255,255,255,0.88)", shadow: true });
+      const lift = (1 - ease(k)) * 3 * u;
+      const px = (bold ? 9.6 : 9) * u;
+      const lines = this.wrap(hook, px, bold ? 700 : 500, this.fDisplay, maxW * (bold ? 0.92 : 1), 3);
+      const blockH = lines.length * px * (bold ? 1.52 : 1.18);
+      const y0 = (bold ? H * 0.5 : H * 0.6) - blockH / 2 + px + lift;
+      const y = this.textBlock(lines, {
+        x: bold ? right : W / 2,
+        y: y0,
+        px,
+        weight: bold ? 700 : 500,
+        font: this.fDisplay,
+        align: bold ? "right" : "center",
+        plate: bold ? accent : undefined,
+        ink: bold ? plateInk : "#ffffff",
+      });
+      if (info.location) {
+        this.text(info.location, bold ? right : W / 2, y + 1.2 * u, 3.8 * u, {
+          weight: 500,
+          align: bold ? "right" : "center",
+          color: "rgba(255,255,255,0.95)",
+          shadow: true,
+        });
+      }
       ctx.globalAlpha = 1;
     }
 
-    // room labels
+    // one line per space
     if (spec.labels) {
       this.segs.forEach((seg, i) => {
-        const start = i === 0 ? Math.max(seg.start + 0.5, INTRO_END + 0.1) : seg.start + 0.5;
-        const end = seg.start + seg.len - 0.35;
-        const a = windowed(t, start, end, 0.35);
-        if (a <= 0 || !seg.clip.label) return;
+        const text = (seg.clip.caption || seg.clip.label || "").trim();
+        if (!text) return;
+        const start = i === 0 ? Math.max(seg.start + 0.45, hookEnd + 0.05) : seg.start + 0.45;
+        const end = seg.start + seg.len - 0.3;
+        const a = windowed(t, start, end, 0.3);
+        if (a <= 0) return;
         ctx.globalAlpha = a;
-        ctx.fillStyle = this.accent;
-        ctx.fillRect(right - 6 * u, base - 4.4 * u, 6 * u, Math.max(3, 0.4 * u));
-        this.text(seg.clip.label, right, base, 3.8 * u, { weight: 500, shadow: true });
+        const slide = (1 - ease(a)) * 4 * u;
+        const px = (bold ? 6.4 : 5.6) * u;
+        const lines = this.wrap(text, px, bold ? 700 : 500, this.fDisplay, maxW * 0.86, 2);
+        const blockH = lines.length * px * (bold ? 1.52 : 1.18);
+        const y0 = sf.bottom - blockH + px;
+        if (!bold) {
+          ctx.fillStyle = accent;
+          ctx.fillRect(right - 7 * u, y0 - px - 2.4 * u, 7 * u, Math.max(3, 0.45 * u));
+        }
+        this.textBlock(lines, {
+          x: right + slide,
+          y: y0,
+          px,
+          weight: bold ? 700 : 500,
+          font: this.fDisplay,
+          align: "right",
+          plate: bold ? "rgba(251,249,244,0.96)" : undefined,
+          ink: bold ? "#17181b" : "#ffffff",
+        });
         ctx.globalAlpha = 1;
       });
     }
@@ -365,47 +481,67 @@ export class Reel {
     const ink = inkOn(brand);
     const local = t - this.endStart;
 
-    ctx.globalAlpha = 0.93 * clamp(local / XF);
+    ctx.globalAlpha = clamp(local / XF);
     ctx.fillStyle = brand;
     ctx.fillRect(0, 0, W, H);
     ctx.globalAlpha = 1;
 
     const items: { h: number; at: number; draw: (y: number) => void }[] = [];
     const gap = (h: number) => items.push({ h, at: 0, draw: () => {} });
+    const maxW = W - 16 * u;
     if (spec.logo) {
-      const lh = Math.min(16 * u, (spec.logo.height * 34 * u) / spec.logo.width);
-      items.push({ h: lh, at: 0.25, draw: (y) => this.drawLogo(W / 2, y, 34 * u, 16 * u, "center") });
-      gap(5 * u);
-    }
-    if (info.name) {
-      items.push({ h: 8 * u, at: 0.4, draw: (y) => this.text(info.name, W / 2, y + 6.6 * u, 8 * u, { font: this.fDisplay, align: "center", color: ink, maxW: W - 12 * u }) });
-    }
-    if (info.price) {
-      gap(2.2 * u);
-      items.push({ h: 4 * u, at: 0.55, draw: (y) => this.text(info.price, W / 2, y + 3.2 * u, 3.6 * u, { align: "center", color: ink, maxW: W - 12 * u }) });
-    }
-    if (info.cta || info.phone) {
-      gap(4.5 * u);
+      const lw = Math.min(40 * u, (spec.logo.width / spec.logo.height) * 11 * u);
+      const lh = (lw * spec.logo.height) / spec.logo.width;
+      const plate = this.logoNeedsPlate(brand);
       items.push({
-        h: 0.3 * u,
-        at: 0.65,
+        h: lh + (plate ? 3.2 * u : 0),
+        at: 0.2,
         draw: (y) => {
-          ctx.fillStyle = ink;
-          ctx.fillRect(W / 2 - 5 * u, y, 10 * u, Math.max(2, 0.25 * u));
+          if (plate) this.logoPlate(W / 2 + lw / 2 + 1.6 * u, y, lw, lh, "#fbf9f4");
+          else ctx.drawImage(spec.logo!, W / 2 - lw / 2, y, lw, lh);
         },
       });
-      gap(4.5 * u);
+      gap(6 * u);
+    }
+    if (info.name) {
+      const lines = this.wrap(info.name, 8.6 * u, 600, this.fDisplay, maxW, 2);
+      items.push({
+        h: lines.length * 10 * u,
+        at: 0.35,
+        draw: (y) => lines.forEach((l, i) => this.text(l, W / 2, y + 7.6 * u + i * 10 * u, 8.6 * u, { font: this.fDisplay, weight: 600, align: "center", color: ink })),
+      });
+    }
+    if (info.location) {
+      items.push({ h: 5 * u, at: 0.45, draw: (y) => this.text(info.location, W / 2, y + 4 * u, 3.8 * u, { align: "center", color: ink, weight: 400 }) });
+    }
+    if (info.price) {
+      gap(3 * u);
+      items.push({ h: 6.4 * u, at: 0.55, draw: (y) => this.text(info.price, W / 2, y + 5 * u, 4.8 * u, { align: "center", color: ink, weight: 600, maxW }) });
     }
     if (info.cta) {
-      items.push({ h: 4.2 * u, at: 0.8, draw: (y) => this.text(info.cta, W / 2, y + 3.3 * u, 3.6 * u, { align: "center", color: ink, weight: 500, maxW: W - 12 * u }) });
+      gap(5 * u);
+      items.push({
+        h: 10 * u,
+        at: 0.7,
+        draw: (y) => {
+          const px = 4.2 * u;
+          ctx.font = `700 ${px}px ${this.fUi}`;
+          const w = Math.min(maxW, ctx.measureText(info.cta).width + 10 * u);
+          ctx.fillStyle = ink;
+          ctx.beginPath();
+          ctx.roundRect(W / 2 - w / 2, y, w, 10 * u, 5 * u);
+          ctx.fill();
+          this.text(info.cta, W / 2, y + 6.5 * u, px, { align: "center", color: brand, weight: 700, maxW: w - 6 * u });
+        },
+      });
     }
     if (info.phone) {
-      gap(1.6 * u);
-      items.push({ h: 6 * u, at: 0.9, draw: (y) => this.text(info.phone, W / 2, y + 5 * u, 5.4 * u, { align: "center", color: ink, weight: 600, dir: "ltr" }) });
+      gap(3.4 * u);
+      items.push({ h: 7 * u, at: 0.85, draw: (y) => this.text(info.phone, W / 2, y + 5.8 * u, 6.4 * u, { align: "center", color: ink, weight: 700, dir: "ltr" }) });
     }
     if (info.website) {
-      gap(2.2 * u);
-      items.push({ h: 3.6 * u, at: 1.0, draw: (y) => this.text(info.website!, W / 2, y + 3 * u, 3 * u, { align: "center", color: ink, dir: "ltr", maxW: W - 12 * u }) });
+      gap(1.6 * u);
+      items.push({ h: 4 * u, at: 0.95, draw: (y) => this.text(info.website!, W / 2, y + 3.2 * u, 3.2 * u, { align: "center", color: ink, dir: "ltr", maxW }) });
     }
 
     const total = items.reduce((s, i) => s + i.h, 0);
@@ -414,11 +550,43 @@ export class Reel {
       const a = clamp((local - it.at) / 0.45);
       if (a > 0 && it.at > 0) {
         ctx.globalAlpha = a;
-        it.draw(y + (1 - ease(a)) * 1.5 * u);
+        it.draw(y + (1 - ease(a)) * 2 * u);
         ctx.globalAlpha = 1;
       }
       y += it.h;
     }
+  }
+
+  // A logo whose own colours are close to the background gets a light plate.
+  private logoLum: number | null = null;
+  private logoNeedsPlate(bg: string) {
+    const logo = this.spec.logo;
+    if (!logo) return false;
+    if (this.logoLum === null) {
+      const c = document.createElement("canvas");
+      c.width = 48;
+      c.height = Math.max(1, Math.round((48 * logo.height) / logo.width));
+      const x = c.getContext("2d")!;
+      x.drawImage(logo, 0, 0, c.width, c.height);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      let sum = 0;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) continue;
+        const ch = [d[i], d[i + 1], d[i + 2]].map((v) => {
+          const cc = v / 255;
+          return cc <= 0.03928 ? cc / 12.92 : ((cc + 0.055) / 1.055) ** 2.4;
+        });
+        sum += 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+        n++;
+      }
+      // an opaque logo (photo-like, no transparency) always sits on its own background
+      this.logoLum = n > d.length / 4 - 2 ? -1 : n ? sum / n : 0;
+    }
+    if (this.logoLum < 0) return false;
+    const b = luminance(bg);
+    const [hi, lo] = [Math.max(b, this.logoLum), Math.min(b, this.logoLum)];
+    return (hi + 0.05) / (lo + 0.05) < 2.6;
   }
 }
 

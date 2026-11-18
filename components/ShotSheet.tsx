@@ -77,8 +77,14 @@ function Body(p: Props & { view: "video" | "frame"; setView: (v: "video" | "fram
       </div>
 
       <div className="ed-controls">
-        {shot.videoUrl && (shot.status === "done" || (busy && shot.modelKey?.startsWith("edit"))) && p.canGenerate && (
-          <EditBox shot={shot} busy={busy} cost={p.editCost} onEdit={p.onEdit} onPick={p.onPickVersion} />
+        {(shot.versions?.length ?? 0) > 1 && (
+          <div className="versions" aria-label="גרסאות של הקליפ">
+            {shot.versions!.map((v, i) => (
+              <button key={v.url} type="button" className="chip" aria-pressed={shot.videoUrl === v.url} onClick={() => p.onPickVersion(v.url)} disabled={busy}>
+                {i === 0 ? "מקור" : v.label}
+              </button>
+            ))}
+          </div>
         )}
 
         <section className="ed-group" aria-labelledby="ed-room">

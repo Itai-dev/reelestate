@@ -5,7 +5,7 @@ import { ASPECTS, PACES, roomById } from "@/lib/presets";
 import { cropToFrame, decode } from "@/lib/image";
 import { FONT_DISPLAY, FONT_UI, Reel, ReelPlayer, canRecord, type ReelClip } from "@/lib/reel";
 import type { Info, Media, Settings, Shot } from "./types";
-import { fontStack, loadBrandFonts, luminance, type Brand } from "@/lib/brand";
+import { fontStack, loadBrandFonts, type Brand } from "@/lib/brand";
 
 type Props = {
   shots: Shot[];
@@ -64,7 +64,7 @@ export default function PlayerSheet(p: Props) {
           ? {
               heading: fontStack(b.fonts.heading, b.fonts.headingKind),
               body: fontStack(b.fonts.body, "sans"),
-              accent: luminance(b.colors.primary) > 0.2 ? b.colors.primary : luminance(b.colors.accent) > 0.2 ? b.colors.accent : "#ffffff",
+              accent: b.colors.primary,
               grade: b.applyGrade ? b.grade : undefined,
             }
           : undefined;
@@ -86,7 +86,7 @@ export default function PlayerSheet(p: Props) {
             await waitForVideo(video);
             if (video.readyState < 2) video = undefined;
           }
-          clips.push({ photo: canvas, video, motion: s.motion, label: s.room === "other" ? "" : roomById(s.room).he });
+          clips.push({ photo: canvas, video, motion: s.motion, label: s.room === "other" ? "" : roomById(s.room).he, caption: s.caption });
         }
         const logo = p.logo ? await decode(p.logo).catch(() => undefined) : undefined;
         if (cancelled || !canvasRef.current) return;
@@ -100,6 +100,7 @@ export default function PlayerSheet(p: Props) {
           labels: p.settings.labels,
           clipSeconds: PACES[p.settings.pace].seconds,
           look,
+          textStyle: p.settings.textStyle ?? "bold",
         });
         player = new ReelPlayer(reel, p.musicUrl);
         player.onTime = (x) => setT(x);

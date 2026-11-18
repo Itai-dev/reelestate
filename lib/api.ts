@@ -106,3 +106,21 @@ export async function startEdit(videoUrl: string, prompt: string): Promise<strin
   });
   return (await json<{ requestId: string }>(r)).requestId;
 }
+
+export async function writeScript(body: unknown): Promise<{ hook: string; captions: string[]; cta: string }> {
+  const r = await fetch("/api/script", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify(body) });
+  return json(r);
+}
+
+export type Action =
+  | { type: "text"; field: "hook" | "name" | "location" | "price" | "cta" | "phone" | "website"; value: string }
+  | { type: "caption"; shot: number; value: string }
+  | { type: "style"; value: "bold" | "calm" }
+  | { type: "labels"; value: boolean }
+  | { type: "pace"; value: "calm" | "brisk" }
+  | { type: "clip"; shot: number; prompt: string; label?: string };
+
+export async function understand(text: string, state: unknown): Promise<{ actions: Action[]; reply: string }> {
+  const r = await fetch("/api/intent", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ text, state }) });
+  return json(r);
+}

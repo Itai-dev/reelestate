@@ -29,6 +29,9 @@ import {
   setPassword,
   readBrand,
   startEdit,
+  understand,
+  writeScript,
+  type Action,
   startGeneration,
   uploadImage,
   type Config,
@@ -40,6 +43,7 @@ import PlayerSheet from "./PlayerSheet";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
+import ChangeBar, { type Change } from "./ChangeBar";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
 import { download as cloudDownload, getProject, getUser, saveProject, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
 import type { User } from "@supabase/supabase-js";
@@ -106,6 +110,10 @@ export default function Studio() {
   const [brandError, setBrandError] = useState("");
   const [step, setStep] = useState<"photos" | "brand" | "video">("photos");
   const [openShot, setOpenShot] = useState<string | null>(null);
+  const [changes, setChanges] = useState<Change[]>([]);
+  const [writing, setWriting] = useState(false);
+  const scriptTried = useRef(false);
+  const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
   const [lastShot, setLastShot] = useState<string | null>(null);
   const style = brand?.applyPrompt ? brand.photoStyle : undefined;
   const styleRef = useRef(style);
@@ -279,6 +287,15 @@ export default function Studio() {
     });
   };
 
+  useEffect(() => {
+    if (step !== "video" || !hydrated || scriptTried.current) return;
+    if (!(config?.mode === "live") || locked || !shots.length) return;
+    if (info.hook || shots.some((s) => s.caption)) return;
+    scriptTried.current = true;
+    writeTexts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, hydrated, config]);
+
   // ---------- account sync ----------
   useEffect(() => {
     const { data } = sb().auth.onAuthStateChange((_e: string, session: { user: User } | null) => setUser(session?.user ?? null));
@@ -438,6 +455,83 @@ export default function Studio() {
     } catch (e) {
       update(id, { editError: e instanceof Error ? e.message : "העריכה נכשלה" });
     }
+  };
+
+  // ---------- on-screen copy ----------
+  const writeTexts = async () => {
+    setWriting(true);
+    try {
+      const list = shotsRef.current;
+      const r = await writeScript({
+        info: { name: info.name, location: info.location, price: info.price, cta: info.cta },
+        brand: brand ? { name: brand.name, tone: brand.tone, vibe: brand.vibe } : null,
+        rooms: list.map((s) => (s.room === "other" ? "חלל" : ROOMS.find((x) => x.id === s.room)!.he)),
+        style: settingsRef.current.textStyle ?? "bold",
+      });
+      setInfo((i) => ({ ...i, hook: r.hook || i.hook, cta: i.cta || r.cta }));
+      setShots((prev) => prev.map((s) => {
+        const k = list.findIndex((x) => x.id === s.id);
+        return k >= 0 && r.captions[k] ? { ...s, caption: r.captions[k] } : s;
+      }));
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : "לא הצלחנו לכתוב טקסטים");
+    }
+    setWriting(false);
+  };
+
+  // ---------- one-line changes ----------
+  const runChange = async (text: string) => {
+    const id = uid();
+    const snap = {
+      info: { ...info },
+      settings: { ...settings },
+      captions: Object.fromEntries(shots.map((s) => [s.id, s.caption])),
+      videos: Object.fromEntries(shots.map((s) => [s.id, s.videoUrl])),
+    };
+    snapshots.current.set(id, snap);
+    setChanges((c) => [{ id, text, reply: "", state: "working", canUndo: false }, ...c]);
+    const setC = (patch: Partial<Change>) => setChanges((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    try {
+      const list = shotsRef.current;
+      const state = {
+        textStyle: settings.textStyle ?? "bold",
+        pace: settings.pace,
+        labels: settings.labels,
+        texts: { hook: info.hook, name: info.name, location: info.location, price: info.price, cta: info.cta, phone: info.phone, website: info.website },
+        shots: list.map((s, i) => ({ shot: i + 1, room: ROOMS.find((x) => x.id === s.room)?.he, caption: s.caption, hasVideo: s.status === "done" })),
+      };
+      const { actions, reply } = await understand(text, state);
+      let clips = 0;
+      for (const a of actions as Action[]) {
+        if (a.type === "text") setInfo((i) => ({ ...i, [a.field]: a.value }));
+        else if (a.type === "caption") {
+          const target = list[a.shot - 1];
+          if (target) update(target.id, { caption: a.value });
+        } else if (a.type === "style") setSettings((st) => ({ ...st, textStyle: a.value }));
+        else if (a.type === "labels") setSettings((st) => ({ ...st, labels: a.value }));
+        else if (a.type === "pace") setSettings((st) => ({ ...st, pace: a.value }));
+        else if (a.type === "clip") {
+          const target = list[a.shot - 1];
+          if (target?.videoUrl && target.status === "done") {
+            clips++;
+            editClip(target.id, a.prompt, a.label || text.slice(0, 20));
+          }
+        }
+      }
+      if (!actions.length) setC({ state: "error", reply: reply || "לא הבנתי מה לשנות. נסו לנסח אחרת." });
+      else setC({ state: "done", reply: (reply || "עודכן") + (clips ? ` (${clips} קליפים בעריכה, כדקה)` : ""), canUndo: true });
+    } catch (e) {
+      setC({ state: "error", reply: e instanceof Error ? e.message : "השינוי נכשל" });
+    }
+  };
+
+  const undoChange = (id: string) => {
+    const snap = snapshots.current.get(id);
+    if (!snap) return;
+    setInfo(snap.info);
+    setSettings(snap.settings);
+    setShots((prev) => prev.map((s) => ({ ...s, caption: snap.captions[s.id], videoUrl: snap.videos[s.id] ?? s.videoUrl })));
+    setChanges((c) => c.map((x) => (x.id === id ? { ...x, canUndo: false, reply: "בוטל" } : x)));
   };
 
   const generateAll = () => {
@@ -889,6 +983,59 @@ export default function Studio() {
                       </small>
                     </span>
                   </button>
+
+                  {live && (
+                    <ChangeBar busy={false} disabled={locked} log={changes} onSend={runChange} onUndo={undoChange} />
+                  )}
+
+                  <div className="block texts">
+                    <h2>טקסט על הסרטון</h2>
+                    <p className="block-sub">משפט פתיחה שעוצר גלילה, שורה אחת לכל חלל, וקריאה לפעולה בסוף.</p>
+                    <div className="field">
+                      <span>סגנון</span>
+                      <div className="seg">
+                        <button type="button" aria-pressed={(settings.textStyle ?? "bold") === "bold"} onClick={() => setSettings({ ...settings, textStyle: "bold" })}>
+                          <b>פרפורמנס</b>
+                          <small>טקסט בולט על משטחי צבע</small>
+                        </button>
+                        <button type="button" aria-pressed={settings.textStyle === "calm"} onClick={() => setSettings({ ...settings, textStyle: "calm" })}>
+                          <b>יוקרה שקטה</b>
+                          <small>טקסט עדין על התמונה</small>
+                        </button>
+                      </div>
+                    </div>
+                    {writing ? (
+                      <Thinking lines={["כותב משפט פתיחה", "מנסח שורה לכל חלל", "בוחר קריאה לפעולה"]} />
+                    ) : (
+                      <>
+                        <label className="field">
+                          <span>משפט פתיחה</span>
+                          <input value={info.hook ?? ""} onChange={(e) => setInfo({ ...info, hook: e.target.value })} placeholder="למשל: 4 חדרים מול הים ביפו" />
+                        </label>
+                        {shots.map((s, i) => (
+                          <div key={s.id} className="texts-row">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={media[s.id]?.img} alt="" />
+                            <input
+                              value={s.caption ?? ""}
+                              onChange={(e) => update(s.id, { caption: e.target.value })}
+                              placeholder={s.room === "other" ? `חלל ${i + 1}` : ROOMS.find((r) => r.id === s.room)?.he}
+                              aria-label={`השורה של חלל ${i + 1}`}
+                            />
+                          </div>
+                        ))}
+                        <label className="field">
+                          <span>קריאה לפעולה</span>
+                          <input value={info.cta} onChange={(e) => setInfo({ ...info, cta: e.target.value })} placeholder="לתיאום סיור בנכס" />
+                        </label>
+                        {live && (
+                          <button type="button" className="btn btn-outline btn-small" onClick={writeTexts} disabled={locked}>
+                            כתיבה מחדש לפי המותג
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                   {live && (
                     <div className="block">
