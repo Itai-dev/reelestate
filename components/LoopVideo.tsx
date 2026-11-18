@@ -19,7 +19,21 @@ export default function LoopVideo({ src, className }: { src: string; className?:
       { rootMargin: "200px" },
     );
     io.observe(v);
-    return () => io.disconnect();
+    // a dropped or refused range request gets one retry
+    let retried = false;
+    const onError = () => {
+      if (retried) return;
+      retried = true;
+      setTimeout(() => {
+        v.load();
+        v.play().catch(() => {});
+      }, 800);
+    };
+    v.addEventListener("error", onError);
+    return () => {
+      io.disconnect();
+      v.removeEventListener("error", onError);
+    };
   }, [src]);
   return <video ref={ref} className={className} muted loop playsInline preload="none" aria-hidden />;
 }

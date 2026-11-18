@@ -77,8 +77,8 @@ export default function Landing() {
             </div>
             <div className="m-card">
               <LoopVideo src={KITCHEN} className="m-thumb" />
-              <b>מטבח</b>
-              <small>החלקה לצד, שעת זהב</small>
+              <b>מבואה</b>
+              <small>הליכה פנימה, יום</small>
             </div>
             <div className="m-card m-plan">
               <div className="m-thumb m-plan-art">
