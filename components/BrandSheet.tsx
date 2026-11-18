@@ -3,11 +3,8 @@
 import { useState } from "react";
 import type { Brand } from "@/lib/brand";
 import { fontStack } from "@/lib/brand";
-import Sheet from "./Sheet";
 
 type Props = {
-  open: boolean;
-  onClose: () => void;
   brand: Brand | null;
   logoUrl?: string;
   busy: boolean;
@@ -21,11 +18,11 @@ type Props = {
 
 const STEPS = ["קורא את האתר", "אוסף צבעים, פונטים ולוגו", "מסתכל על התמונות ומבין את הווייב"];
 
-export default function BrandSheet(p: Props) {
+export default function BrandPanel(p: Props) {
   const [url, setUrl] = useState("");
   const b = p.brand;
   return (
-    <Sheet open={p.open} onClose={p.onClose} title="המותג שלכם">
+    <div className="brand-panel">
       <form
         className="brand-form"
         onSubmit={(e) => {
@@ -161,7 +158,7 @@ export default function BrandSheet(p: Props) {
           </div>
         </div>
       )}
-    </Sheet>
+    </div>
   );
 }
 
