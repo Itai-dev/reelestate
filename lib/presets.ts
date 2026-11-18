@@ -214,3 +214,10 @@ export const PACES: Record<Pace, { he: string; seconds: number }> = {
   calm: { he: "רגוע", seconds: 4.6 },
   brisk: { he: "דינמי", seconds: 3 },
 };
+
+// Interior renders for projects that have no photos yet (from a plan and references).
+export type RenderKey = "render" | "renderText";
+export const RENDERS: Record<RenderKey, { endpoint: string; pricePerImage: number }> = {
+  render: { endpoint: "fal-ai/nano-banana-pro/edit", pricePerImage: 0.15 },
+  renderText: { endpoint: "fal-ai/nano-banana-pro", pricePerImage: 0.15 },
+};

@@ -60,7 +60,7 @@ export type GenStatus =
   | { status: "done"; videoUrl: string }
   | { status: "error"; error: string; refunded?: boolean };
 
-export async function checkGeneration(model: ModelKey | EditKey, id: string): Promise<GenStatus> {
+export async function checkGeneration(model: ModelKey | EditKey | "render" | "renderText", id: string): Promise<GenStatus> {
   const q = new URLSearchParams({ model, id });
   const r = await fetch(`/api/status?${q}`, { headers: headers() });
   return json<GenStatus>(r);
@@ -122,5 +122,16 @@ export type Action =
 
 export async function understand(text: string, state: unknown): Promise<{ actions: Action[]; reply: string }> {
   const r = await fetch("/api/intent", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ text, state }) });
+  return json(r);
+}
+
+export type PlanSpace = { room: string; title: string; scene: string };
+export async function readPlan(body: { plan?: string; refs: string[]; brief: string }): Promise<{ style: string; spaces: PlanSpace[] }> {
+  const r = await fetch("/api/plan", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify(body) });
+  return json(r);
+}
+
+export async function startRender(prompt: string, refs: string[], aspect: string): Promise<{ requestId: string; model: "render" | "renderText" }> {
+  const r = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ prompt, refs, aspect }) });
   return json(r);
 }

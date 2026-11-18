@@ -50,6 +50,9 @@ export const CREDITS_PER_CLIP: Record<ModelKey, number> = {
 // Credits charged for one chat edit of a 5-second clip.
 export const CREDITS_PER_EDIT: Record<EditKey, number> = { edit720: 1, edit1080: 2 };
 
+// Credits charged for one interior render.
+export const CREDITS_PER_RENDER = 1;
+
 // A typical reel: about 6 spaces in Seedance 2.5 at 720p.
 export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.seedance720;
 

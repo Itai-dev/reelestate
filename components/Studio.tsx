@@ -5,6 +5,8 @@ import {
   ASPECTS,
   DEFAULT_MODEL,
   EDITS,
+  RENDERS,
+  type RoomId,
   FAMILIES,
   MODELS,
   modelKeyOf,
@@ -17,7 +19,7 @@ import {
 } from "@/lib/presets";
 import Link from "next/link";
 import { cropToFrame, normalize } from "@/lib/image";
-import { CREDITS_PER_CLIP, CREDITS_PER_EDIT } from "@/lib/plans";
+import { CREDITS_PER_CLIP, CREDITS_PER_EDIT, CREDITS_PER_RENDER } from "@/lib/plans";
 import { refreshMe, useMe } from "./SiteNav";
 import { load, remove, save } from "@/lib/store";
 import {
@@ -43,6 +45,7 @@ import PlayerSheet from "./PlayerSheet";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
+import RenderSheet from "./RenderSheet";
 import ChangeBar, { type Change } from "./ChangeBar";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
 import { download as cloudDownload, getProject, getUser, saveProject, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
@@ -111,6 +114,7 @@ export default function Studio() {
   const [step, setStep] = useState<"photos" | "brand" | "video">("photos");
   const [openShot, setOpenShot] = useState<string | null>(null);
   const [changes, setChanges] = useState<Change[]>([]);
+  const [renderOpen, setRenderOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -270,6 +274,18 @@ export default function Studio() {
     }
     setAdding(0);
     if (failed) setNotice(`${failed} תמונות לא נפתחו. HEIC נפתח רק בספארי; אפשר לשמור כ-JPG ולנסות שוב.`);
+  };
+
+  // A render made from the plan joins the project like a photo, marked as a render.
+  const addRender = async (file: Blob, room: RoomId) => {
+    const { blob, w, h } = await normalize(file);
+    const id = uid();
+    blobs.current.set(id, blob);
+    await save(`img:${id}`, blob);
+    const url = URL.createObjectURL(blob);
+    const motion = ROOMS.find((r) => r.id === room)?.motion ?? "push_in";
+    setMedia((m) => ({ ...m, [id]: { img: url } }));
+    setShots((prev) => [...prev, { id, room, motion, light: "day", life: false, fx: 0.5, fy: 0.5, imgW: w, imgH: h, status: "idle", render: true }]);
   };
 
   const removeShot = (id: string) => {
@@ -834,25 +850,39 @@ export default function Studio() {
                 <p>כל תמונה הופכת לקליפ של חלל אחד. לוחצים על תמונה כדי לבחור חלל, תנועת מצלמה ואור.</p>
               </header>
               {shots.length === 0 ? (
-                <div className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps} onClick={() => fileInput.current?.click()} role="button" tabIndex={0}>
-                  <span className="drop-art" aria-hidden>
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                  <span className="drop-title">גררו לכאן תמונות, או בחרו מהמכשיר</span>
-                  <span className="drop-sub">חזית, סלון, מטבח, חדרים, מרפסת. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
+                <div className="start-choice">
+                  <div className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps} onClick={() => fileInput.current?.click()} role="button" tabIndex={0}>
+                    <span className="drop-art" aria-hidden>
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <span className="drop-title">יש לי תמונות</span>
+                    <span className="drop-sub">גוררים לכאן או בוחרים מהמכשיר. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
+                  </div>
+                  <button type="button" className="choice-alt" onClick={() => setRenderOpen(true)} disabled={!live || locked}>
+                    <IconSpark />
+                    <b>עוד אין לי תמונות</b>
+                    <small>מעלים תוכנית, רפרנסים ומשפט על הנכס, ונוצרות הדמיות לכל חלל.</small>
+                  </button>
                 </div>
               ) : (
                 <>
                   {adding > 0 && <Thinking compact lines={[`מוסיף ${adding} תמונות`, "מקטין ומיישר אותן"]} />}
                   <div className="toolbar">
                     <span>{shots.length} חללים, לפי סדר ההופעה בסרטון</span>
-                    {shots.length > 1 && (
-                      <button type="button" className="link" onClick={sortByTour}>
-                        סידור אוטומטי לפי מסלול סיור
-                      </button>
-                    )}
+                    <span className="toolbar-links">
+                      {live && !locked && (
+                        <button type="button" className="link" onClick={() => setRenderOpen(true)}>
+                          הוספת הדמיות מתוכנית
+                        </button>
+                      )}
+                      {shots.length > 1 && (
+                        <button type="button" className="link" onClick={sortByTour}>
+                          סידור לפי מסלול סיור
+                        </button>
+                      )}
+                    </span>
                   </div>
                   <div className={`grid grid-${settings.aspect.replace(":", "x")}`}>
                     {shots.map((s, i) => (
@@ -1277,6 +1307,14 @@ export default function Studio() {
           onClose={() => setOpenShot(null)}
         />
       )}
+
+      <RenderSheet
+        open={renderOpen}
+        onClose={() => setRenderOpen(false)}
+        aspect={settings.aspect}
+        costLine={accounts ? `{n} קרדיטים (${CREDITS_PER_RENDER} להדמיה)` : `כ-$${RENDERS.render.pricePerImage.toFixed(2)} להדמיה`}
+        onAdd={addRender}
+      />
 
       {player && (
         <PlayerSheet

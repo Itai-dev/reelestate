@@ -86,7 +86,7 @@ export default function PlayerSheet(p: Props) {
             await waitForVideo(video);
             if (video.readyState < 2) video = undefined;
           }
-          clips.push({ photo: canvas, video, motion: s.motion, label: s.room === "other" ? "" : roomById(s.room).he, caption: s.caption });
+          clips.push({ photo: canvas, video, motion: s.motion, label: s.room === "other" ? "" : roomById(s.room).he, caption: s.caption, render: s.render });
         }
         const logo = p.logo ? await decode(p.logo).catch(() => undefined) : undefined;
         if (cancelled || !canvasRef.current) return;

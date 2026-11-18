@@ -16,6 +16,7 @@ export type Shot = {
   imgH: number;
   customPrompt?: string;
   caption?: string; // the on-screen line for this space
+  render?: boolean; // an AI render, not a photo of the property
   status: ShotStatus;
   position?: number;
   error?: string;

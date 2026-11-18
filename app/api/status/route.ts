@@ -1,5 +1,5 @@
 import { errorMessage, fal, isJobKey, jobEndpoint, mode } from "@/lib/server";
-import type { EditKey, ModelKey } from "@/lib/presets";
+import type { JobKey } from "@/lib/server";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
   return Response.json(out);
 }
 
-async function falStatus(model: ModelKey | EditKey, id: string): Promise<Out> {
+async function falStatus(model: JobKey, id: string): Promise<Out> {
   const endpoint = jobEndpoint(model);
   try {
     const st = await fal().queue.status(endpoint, { requestId: id, logs: false });
@@ -64,7 +64,8 @@ async function falStatus(model: ModelKey | EditKey, id: string): Promise<Out> {
   }
   try {
     const res = await fal().queue.result(endpoint, { requestId: id });
-    const videoUrl = (res.data as { video?: { url?: string } })?.video?.url;
+    const d = res.data as { video?: { url?: string }; images?: { url?: string }[] };
+    const videoUrl = d?.video?.url ?? d?.images?.[0]?.url;
     if (!videoUrl) return { status: "error", error: "המודל לא החזיר וידאו" };
     return { status: "done", videoUrl };
   } catch (e) {

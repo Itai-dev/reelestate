@@ -11,6 +11,7 @@ export type ReelClip = {
   motion: MotionId;
   label: string;
   caption?: string;
+  render?: boolean;
 };
 
 export type ReelInfo = {
@@ -385,6 +386,14 @@ export class Reel {
           shadow: true,
         });
       }
+      ctx.globalAlpha = 1;
+    }
+
+    // renders are marked as such for as long as they are on screen
+    const onScreen = this.active(t).filter((a) => a.seg.clip.render);
+    if (onScreen.length) {
+      ctx.globalAlpha = Math.max(...onScreen.map((a) => a.alpha));
+      this.text("הדמיה להמחשה בלבד", right, sf.top + (spec.logo ? 13 : 3) * u, 2.6 * u, { weight: 500, color: "rgba(255,255,255,0.9)", shadow: true });
       ctx.globalAlpha = 1;
     }
 

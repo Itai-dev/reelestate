@@ -52,6 +52,7 @@ export default function ShotCard({ shot, index, aspect, img, vid, stale, onOpen 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={img} alt="" draggable={false} style={{ objectPosition: objectPosition(shot, aspect) }} />
         {src && shot.status === "done" && <video src={src} muted loop autoPlay playsInline className="card-video" />}
+        {shot.render && <span className="card-render">הדמיה</span>}
         <span className="card-num" aria-hidden>
           {index + 1}
         </span>

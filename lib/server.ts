@@ -1,5 +1,5 @@
 import { createFalClient } from "@fal-ai/client";
-import { EDITS, MODELS, NEGATIVE_PROMPT, type EditKey, type ModelKey } from "./presets";
+import { EDITS, MODELS, NEGATIVE_PROMPT, RENDERS, type EditKey, type ModelKey, type RenderKey } from "./presets";
 
 export type Mode = "live" | "demo" | "mock";
 
@@ -32,8 +32,10 @@ export function isEditKey(v: unknown): v is EditKey {
   return typeof v === "string" && v in EDITS;
 }
 
-export const isJobKey = (v: unknown): v is ModelKey | EditKey => isModelKey(v) || isEditKey(v);
-export const jobEndpoint = (k: ModelKey | EditKey) => (isEditKey(k) ? EDITS[k].endpoint : MODELS[k].endpoint);
+export const isRenderKey = (v: unknown): v is RenderKey => typeof v === "string" && v in RENDERS;
+export type JobKey = ModelKey | EditKey | RenderKey;
+export const isJobKey = (v: unknown): v is JobKey => isModelKey(v) || isEditKey(v) || isRenderKey(v);
+export const jobEndpoint = (k: JobKey) => (isEditKey(k) ? EDITS[k].endpoint : isRenderKey(k) ? RENDERS[k].endpoint : MODELS[k].endpoint);
 
 // Edits only take clips that already live on fal's storage, so the key can't be used
 // to process arbitrary videos from the web.
