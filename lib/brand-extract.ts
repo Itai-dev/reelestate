@@ -142,6 +142,9 @@ function rankColors(css: string, html: string, theme: string | null) {
   }
   if (theme) add(theme, 40);
 
+  // framework defaults (WordPress admin, Gutenberg, Ant Design, Bootstrap) are not the brand
+  for (const c of ["#3858e9", "#007cba", "#2271b1", "#0073aa", "#135e96", "#1890ff", "#40a9ff", "#91d5ff", "#096dd9", "#0d6efd", "#007bff", "#32373c", "#cf2e2e", "#ff6900", "#fcb900", "#7bdcb5", "#00d084", "#8ed1fc", "#0693e3", "#abb8c3", "#eb144c", "#f78da7", "#9b51e0"])
+    if (c !== theme) score.delete(c);
   const all = [...score.entries()].sort((a, b) => b[1] - a[1]);
   const chroma = all.filter(([c]) => {
     const { s, l } = hsl(c);
@@ -500,7 +503,10 @@ export async function extractBrand(input: string): Promise<{ brand: Brand; logo:
     description: description?.slice(0, 240),
     colors: { primary, accent, background, ink, palette },
     fonts: { heading: fonts.heading, body: fonts.body, headingKind: kind },
-    vibe: Array.isArray(vision?.vibe) ? vision!.vibe.filter((v) => typeof v === "string").slice(0, 5) : [],
+    vibe: (Array.isArray(vision?.vibe) ? vision!.vibe : typeof vision?.vibe === "string" ? String(vision.vibe).split(/[,،]/) : [])
+      .map((v) => String(v).trim())
+      .filter(Boolean)
+      .slice(0, 5),
     tone: typeof vision?.tone === "string" ? vision.tone.slice(0, 200) : undefined,
     photoStyle: typeof vision?.photoStyle === "string" ? vision.photoStyle.replace(/\s+/g, " ").slice(0, 320) : undefined,
     grade,
