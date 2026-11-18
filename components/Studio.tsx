@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ASPECTS,
   DEFAULT_MODEL,
@@ -26,15 +26,21 @@ import {
   ApiError,
   getPassword,
   setPassword,
+  readBrand,
   startGeneration,
   uploadImage,
   type Config,
 } from "@/lib/api";
 import ShotCard from "./ShotCard";
+import ShotSheet from "./ShotSheet";
+import BrandSheet from "./BrandSheet";
+import Sheet from "./Sheet";
 import PlayerSheet from "./PlayerSheet";
+import { IconChevron, IconChip, IconDetails, IconFrame, IconLink, IconPlay, IconPlus, IconSliders, IconSpark } from "./Icons";
+import { loadBrandFonts, type Brand } from "@/lib/brand";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
-type Saved = { shots: Shot[]; info: Info; settings: Settings; musicName?: string };
+type Saved = { shots: Shot[]; info: Info; settings: Settings; musicName?: string; brand?: Brand | null };
 
 const DEFAULT_INFO: Info = { name: "", location: "", price: "", cta: "", phone: "", brand: "#1d2a3a" };
 const DEFAULT_SETTINGS: Settings = { aspect: "9:16", layout: "full", pace: "calm", model: DEFAULT_MODEL, labels: true };
@@ -57,6 +63,15 @@ export default function Studio() {
   const [notice, setNotice] = useState<React.ReactNode>("");
   const me = useMe();
   const [drag, setDrag] = useState(false);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [brandBusy, setBrandBusy] = useState(false);
+  const [brandError, setBrandError] = useState("");
+  const [panel, setPanel] = useState<"brand" | "details" | "style" | "model" | null>(null);
+  const [openShot, setOpenShot] = useState<string | null>(null);
+  const [lastShot, setLastShot] = useState<string | null>(null);
+  const style = brand?.applyPrompt ? brand.photoStyle : undefined;
+  const styleRef = useRef(style);
+  styleRef.current = style;
 
   const blobs = useRef(new Map<string, Blob>());
   const shotsRef = useRef<Shot[]>([]);
@@ -98,6 +113,10 @@ export default function Studio() {
         const st = { ...DEFAULT_SETTINGS, ...saved.settings };
         if (!(st.model in MODELS)) st.model = DEFAULT_MODEL;
         setSettings(st);
+        if (saved.brand) {
+          setBrand(saved.brand);
+          loadBrandFonts(saved.brand);
+        }
         const lg = await load<Blob>("logo");
         if (lg) setLogo({ blob: lg, url: URL.createObjectURL(lg) });
         const mu = await load<Blob>("music");
@@ -115,10 +134,10 @@ export default function Studio() {
   const latest = useRef<Saved | null>(null);
   useEffect(() => {
     if (!hydrated) return;
-    latest.current = { shots, info, settings, musicName: music?.name };
+    latest.current = { shots, info, settings, musicName: music?.name, brand };
     const id = setTimeout(() => save("project", latest.current), 400);
     return () => clearTimeout(id);
-  }, [hydrated, shots, info, settings, music]);
+  }, [hydrated, shots, info, settings, music, brand]);
   useEffect(() => {
     const flush = () => {
       if (latest.current && document.visibilityState === "hidden") save("project", latest.current);
@@ -185,6 +204,40 @@ export default function Studio() {
     });
   };
 
+  // ---------- brand ----------
+  const setLogoBlob = (blob: Blob) => {
+    setLogo((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return { blob, url: URL.createObjectURL(blob) };
+    });
+    save("logo", blob);
+  };
+
+  const fetchBrand = async (url: string) => {
+    setBrandBusy(true);
+    setBrandError("");
+    try {
+      const { brand: b, logo: data } = await readBrand(url);
+      setBrand(b);
+      loadBrandFonts(b);
+      setInfo((i) => ({ ...i, brand: b.colors.primary, website: b.host }));
+      if (data) setLogoBlob(await (await fetch(data)).blob());
+    } catch (e) {
+      setBrandError(e instanceof Error ? e.message : "לא הצלחנו לקרוא את האתר");
+    }
+    setBrandBusy(false);
+  };
+
+  const patchBrand = (patch: Partial<Brand>) => {
+    setBrand((b) => (b ? { ...b, ...patch } : b));
+    if (patch.colors) setInfo((i) => ({ ...i, brand: patch.colors!.primary }));
+  };
+
+  const removeBrand = () => {
+    setBrand(null);
+    setInfo((i) => ({ ...i, website: "" }));
+  };
+
   const sortByTour = () => {
     const order = (s: Shot) => ROOMS.findIndex((r) => r.id === s.room);
     setShots((prev) => prev.map((s, i) => ({ s, i })).sort((a, b) => order(a.s) - order(b.s) || a.i - b.i).map((x) => x.s));
@@ -195,20 +248,20 @@ export default function Studio() {
   const locked = Boolean(config?.protected && !pw);
 
   const needsGeneration = (s: Shot) =>
-    !BUSY.has(s.status) && (s.status === "idle" || s.status === "error" || (s.status === "done" && s.genSig !== sigOf(s, settings.aspect)));
+    !BUSY.has(s.status) && (s.status === "idle" || s.status === "error" || (s.status === "done" && s.genSig !== sigOf(s, settings.aspect, style)));
 
   const generate = async (id: string) => {
     const s = shotsRef.current.find((x) => x.id === id);
     const blob = blobs.current.get(id);
     if (!s || !blob) return;
     const { aspect, model } = settingsRef.current;
-    const sig = sigOf(s, aspect);
+    const sig = sigOf(s, aspect, styleRef.current);
     update(id, { status: "preparing", error: undefined });
     try {
       const { w, h } = ASPECTS[aspect];
       const cropped = await (await cropToFrame(blob, w, h, s.fx, s.fy)).blob();
       const imageUrl = await uploadImage(cropped);
-      const requestId = await startGeneration(model, imageUrl, promptOf(s));
+      const requestId = await startGeneration(model, imageUrl, promptOf(s, styleRef.current));
       update(id, { status: "queued", requestId, modelKey: model, pendingSig: sig, position: undefined });
       refreshMe();
     } catch (e) {
@@ -304,20 +357,88 @@ export default function Studio() {
   }, [shots.length, settings.pace]);
 
   // ---------- render ----------
+  const brandReady = live && !locked && (!accounts || signedIn);
+  const shown = shots.find((s) => s.id === (openShot ?? lastShot));
+  const shownIndex = shown ? shots.indexOf(shown) : 0;
+  const openCard = (id: string) => {
+    setLastShot(id);
+    setOpenShot(id);
+  };
+  const dropProps = {
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDrag(true);
+    },
+    onDragLeave: () => setDrag(false),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDrag(false);
+      addFiles(e.dataTransfer.files);
+    },
+  };
+  const picker = (
+    <input
+      ref={fileInput}
+      type="file"
+      accept="image/*"
+      multiple
+      hidden
+      onChange={(e) => {
+        if (e.target.files) addFiles(e.target.files);
+        e.target.value = "";
+      }}
+    />
+  );
+
+  const cta = (
+    <>
+      {live && accounts && !signedIn && me && (
+        <Link className="btn btn-primary" href="/login?next=/">
+          התחברות כדי ליצור וידאו
+        </Link>
+      )}
+      {live && accounts && signedIn && toGenerate.length > 0 && creditsNeeded > balance && (
+        <Link className="btn btn-primary" href="/pricing">
+          חסרים {creditsNeeded - balance} קרדיטים
+        </Link>
+      )}
+      {live && (!accounts || (signedIn && (creditsNeeded <= balance || !toGenerate.length))) && (
+        <button type="button" className="btn btn-primary" onClick={generateAll} disabled={!toGenerate.length || locked}>
+          {toGenerate.length ? `יצירת וידאו ל-${toGenerate.length} חללים` : busyCount ? "יוצר…" : "כל הקליפים מוכנים"}
+        </button>
+      )}
+    </>
+  );
+  const priceLine = live && toGenerate.length > 0 && (
+    <b className="sum-price">{accounts ? `${creditsNeeded} קרדיטים` : <span dir="ltr">~${cost.toFixed(2)}</span>}</b>
+  );
+
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand">
-          <h1>מתמונות של נכס לסרטון שמראה את החלל</h1>
-          <p>מעלים תמונות, בוחרים תנועת מצלמה ואור לכל חלל, ומקבלים רילס ממותג.</p>
-        </div>
-        {config?.mode === "demo" && (
-          <p className="mode">
-            מצב דמו: התצוגה המקדימה מזיזה את התמונות בלבד. כדי לייצר וידאו AI מוסיפים מפתח FAL_KEY בהגדרות השרת.
-          </p>
-        )}
-        {config?.mode === "mock" && <p className="mode">מצב בדיקה: הקליפים מדומים ולא עולים כסף.</p>}
+      <header className="hero">
+        <h1>מתמונות של נכס לסרטון בשפה של המותג</h1>
+        <button type="button" className="brandbar" onClick={() => setPanel("brand")}>
+          <span className="brandbar-icon" style={brand ? { background: brand.colors.primary } : undefined}>
+            {brand && logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo.url} alt="" />
+            ) : (
+              <IconLink />
+            )}
+          </span>
+          <span className="brandbar-text">
+            <b>{brand ? brand.name : "המותג שלכם"}</b>
+            <small>{brand ? [brand.host, ...brand.vibe.slice(0, 3)].join(" · ") : "מדביקים קישור לאתר ומקבלים לוגו, צבעים, פונטים ושפת צילום"}</small>
+          </span>
+          <span className="brandbar-go">
+            <IconSpark />
+          </span>
+        </button>
+        <FormatTabs value={settings.aspect} onChange={(aspect) => setSettings({ ...settings, aspect })} />
       </header>
+
+      {config?.mode === "demo" && <p className="mode">מצב דמו: התצוגה המקדימה מזיזה את התמונות בלבד. כדי לייצר וידאו AI מוסיפים מפתח FAL_KEY בהגדרות השרת.</p>}
+      {config?.mode === "mock" && <p className="mode">מצב בדיקה: הקליפים מדומים ולא עולים כסף.</p>}
 
       {locked && (
         <form
@@ -333,7 +454,7 @@ export default function Studio() {
             <span>סיסמת גישה ליצירת וידאו</span>
             <input name="pw" type="password" autoComplete="current-password" />
           </label>
-          <button className="btn btn-primary" type="submit">
+          <button className="btn btn-dark" type="submit">
             כניסה
           </button>
         </form>
@@ -350,274 +471,101 @@ export default function Studio() {
 
       <main className="layout">
         <section className="col-shots" aria-labelledby="shots-title">
-          <div className="section-head">
-            <h2 id="shots-title">צילומים</h2>
-            {shots.length > 1 && (
-              <button type="button" className="link" onClick={sortByTour}>
-                סידור לפי מסלול סיור
-              </button>
-            )}
-          </div>
-
-          {hydrated && shots.length === 0 ? (
-            <label
-              className={`drop drop-empty${drag ? " is-drag" : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDrag(true);
-              }}
-              onDragLeave={() => setDrag(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDrag(false);
-                addFiles(e.dataTransfer.files);
-              }}
-            >
-              <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && addFiles(e.target.files)} hidden />
-              <span className="drop-title">הוסיפו תמונות של הנכס</span>
+          {shots.length === 0 ? (
+            <label className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps}>
+              {picker}
+              <span className="drop-art" aria-hidden>
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="drop-title" id="shots-title">הוסיפו תמונות של הנכס</span>
               <span className="drop-sub">חזית, סלון, מטבח, חדרים, מרפסת. בין 4 ל-10 תמונות יוצרות רילס של 20–40 שניות.</span>
               <span className="btn btn-primary">בחירת תמונות</span>
             </label>
           ) : (
             <>
-              <div className="shots">
+              <div className="section-head">
+                <h2 id="shots-title">{shots.length} חללים בסיור</h2>
+                {shots.length > 1 && (
+                  <button type="button" className="link" onClick={sortByTour}>
+                    סידור לפי מסלול סיור
+                  </button>
+                )}
+              </div>
+              <div className={`grid grid-${settings.aspect.replace(":", "x")}`}>
                 {shots.map((s, i) => (
                   <ShotCard
                     key={s.id}
                     shot={s}
                     index={i}
-                    count={shots.length}
                     aspect={settings.aspect}
                     img={media[s.id]?.img ?? ""}
                     vid={media[s.id]?.vid}
-                    canGenerate={live && !locked}
-                    onChange={(patch) => update(s.id, patch)}
-                    onMove={(d) => move(s.id, d)}
-                    onRemove={() => removeShot(s.id)}
-                    onGenerate={() => generate(s.id)}
+                    stale={s.status === "done" && s.genSig !== sigOf(s, settings.aspect, style)}
+                    onOpen={() => openCard(s.id)}
                   />
                 ))}
+                <label className={`card card-add${drag ? " is-drag" : ""}`} {...dropProps}>
+                  {picker}
+                  <span className="card-media" style={{ aspectRatio: `${ASPECTS[settings.aspect].w} / ${ASPECTS[settings.aspect].h}` }}>
+                    <IconPlus />
+                    <b>{adding > 0 ? `מוסיף ${adding}…` : "הוספת תמונות"}</b>
+                  </span>
+                </label>
               </div>
-              <label
-                className={`drop drop-more${drag ? " is-drag" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDrag(true);
-                }}
-                onDragLeave={() => setDrag(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDrag(false);
-                  addFiles(e.dataTransfer.files);
-                }}
-              >
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => {
-                    if (e.target.files) addFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                  hidden
-                />
-                {adding > 0 ? `מוסיף ${adding} תמונות…` : "הוספת תמונות"}
-              </label>
             </>
           )}
         </section>
 
         <aside className="col-side">
-          <section className="panel" aria-labelledby="details-title">
-            <h2 id="details-title">פרטי הפרויקט</h2>
-            <p className="panel-sub">מופיעים בפתיחה ובכרטיס הסיום של הרילס.</p>
-            <label className="field">
-              <span>שם הפרויקט</span>
-              <input value={info.name} onChange={(e) => setInfo({ ...info, name: e.target.value })} placeholder="למשל: Olive Residences" />
-            </label>
-            <label className="field">
-              <span>מיקום</span>
-              <input value={info.location} onChange={(e) => setInfo({ ...info, location: e.target.value })} placeholder="למשל: זכרון יעקב" />
-            </label>
-            <label className="field">
-              <span>שורת מחיר</span>
-              <input value={info.price} onChange={(e) => setInfo({ ...info, price: e.target.value })} placeholder="למשל: 4 חדרים החל מ-2,890,000 ₪" />
-            </label>
-            <label className="field">
-              <span>קריאה לפעולה</span>
-              <input value={info.cta} onChange={(e) => setInfo({ ...info, cta: e.target.value })} placeholder="למשל: לתיאום סיור בדירה לדוגמה" />
-            </label>
-            <label className="field">
-              <span>טלפון</span>
-              <input dir="ltr" inputMode="tel" value={info.phone} onChange={(e) => setInfo({ ...info, phone: e.target.value })} placeholder="*5555" />
-            </label>
-            <div className="row-2">
-              <div className="field">
-                <span>לוגו</span>
-                <label className="file">
-                  <input
-                    type="file"
-                    accept="image/png,image/svg+xml,image/webp,image/jpeg"
-                    hidden
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      if (logo) URL.revokeObjectURL(logo.url);
-                      setLogo({ blob: f, url: URL.createObjectURL(f) });
-                      save("logo", f);
-                    }}
-                  />
-                  {logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logo.url} alt="הלוגו שהועלה" />
-                  ) : (
-                    "העלאת לוגו"
-                  )}
-                </label>
-                {logo && (
-                  <button
-                    type="button"
-                    className="link"
-                    onClick={() => {
-                      URL.revokeObjectURL(logo.url);
-                      setLogo(null);
-                      remove("logo");
-                    }}
-                  >
-                    הסרה
-                  </button>
-                )}
-              </div>
-              <label className="field">
-                <span>צבע לכרטיס הסיום</span>
-                <span className="color">
-                  <input type="color" value={info.brand} onChange={(e) => setInfo({ ...info, brand: e.target.value })} />
-                  <code dir="ltr">{info.brand}</code>
-                </span>
-              </label>
-            </div>
-          </section>
+          <section className="sum" aria-label="הרילס">
+            {shots.length > 0 ? (
+              <p className="sum-head">
+                <b>{shots.length} חללים</b> · כ-{totalSeconds} שניות
+              </p>
+            ) : (
+              <p className="sum-head">
+                <b>הרילס שלכם</b>
+              </p>
+            )}
+            <p className="sum-sub">
+              {accounts && signedIn ? `יתרה: ${balance} קרדיטים. ` : ""}
+              {!shots.length
+                ? "מתחילים בהעלאת תמונות."
+                : live
+                  ? busyCount
+                    ? `${busyCount} קליפים בעבודה`
+                    : `${readyCount} מתוך ${shots.length} עם וידאו AI`
+                  : "תצוגה מקדימה עם תנועה מדומה"}
+            </p>
 
-          <section className="panel" aria-labelledby="style-title">
-            <h2 id="style-title">עריכה</h2>
-
-            <div className="field">
-              <span>פורמט</span>
-              <div className="seg">
-                {(Object.keys(ASPECTS) as Aspect[]).map((a) => (
-                  <button key={a} type="button" aria-pressed={settings.aspect === a} onClick={() => setSettings({ ...settings, aspect: a })}>
-                    <b dir="ltr">{ASPECTS[a].label}</b>
-                    <small>{ASPECTS[a].hint}</small>
-                  </button>
-                ))}
-              </div>
+            <div className="rows">
+              <Row icon={<IconDetails />} title="פרטי הפרויקט" value={info.name || "שם, מיקום, מחיר וטלפון"} onClick={() => setPanel("details")} />
+              <Row
+                icon={<IconSliders />}
+                title="עריכה"
+                value={`${settings.layout === "full" ? "מסך מלא" : "לפני ואחרי"} · ${PACES[settings.pace].he}${music ? " · מוזיקה" : ""}`}
+                onClick={() => setPanel("style")}
+              />
+              {live && (
+                <Row
+                  icon={<IconChip />}
+                  title="מודל וידאו"
+                  value={<span dir="ltr">{`${MODELS[settings.model].name} · ${MODELS[settings.model].resolution}`}</span>}
+                  onClick={() => setPanel("model")}
+                />
+              )}
             </div>
 
-            <div className="field">
-              <span>תצוגה</span>
-              <div className="seg">
-                <button type="button" aria-pressed={settings.layout === "full"} onClick={() => setSettings({ ...settings, layout: "full" })}>
-                  <b>מסך מלא</b>
-                  <small>סיור בנכס</small>
-                </button>
-                <button type="button" aria-pressed={settings.layout === "split"} onClick={() => setSettings({ ...settings, layout: "split" })}>
-                  <b>לפני ואחרי</b>
-                  <small>תמונה מול וידאו</small>
+            {shots.length > 0 && (
+              <div className="sum-actions">
+                {priceLine && <p className="sum-total">סה״כ {priceLine}</p>}
+                {cta}
+                <button type="button" className="btn btn-outline" onClick={() => setPlayer(true)}>
+                  <IconPlay /> צפייה ברילס
                 </button>
               </div>
-            </div>
-
-            <div className="field">
-              <span>קצב</span>
-              <div className="seg">
-                {(Object.keys(PACES) as Pace[]).map((k) => (
-                  <button key={k} type="button" aria-pressed={settings.pace === k} onClick={() => setSettings({ ...settings, pace: k })}>
-                    <b>{PACES[k].he}</b>
-                    <small>{PACES[k].seconds} שניות לחלל</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <label className="check">
-              <input type="checkbox" checked={settings.labels} onChange={(e) => setSettings({ ...settings, labels: e.target.checked })} />
-              שמות החללים על המסך
-            </label>
-
-            <div className="field">
-              <span>מוזיקה</span>
-              <div className="music">
-                <label className="btn btn-ghost">
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    hidden
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      if (music) URL.revokeObjectURL(music.url);
-                      setMusic({ blob: f, url: URL.createObjectURL(f), name: f.name });
-                      save("music", f);
-                    }}
-                  />
-                  {music ? "החלפה" : "העלאת קובץ"}
-                </label>
-                {music && (
-                  <>
-                    <span className="music-name" dir="auto">{music.name}</span>
-                    <button
-                      type="button"
-                      className="link"
-                      onClick={() => {
-                        URL.revokeObjectURL(music.url);
-                        setMusic(null);
-                        remove("music");
-                      }}
-                    >
-                      הסרה
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {live && (
-              <>
-                <div className="field">
-                  <span>מודל וידאו</span>
-                  <div className="seg">
-                    {(Object.keys(FAMILIES) as Family[]).map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        aria-pressed={MODELS[settings.model].family === f}
-                        onClick={() => setSettings({ ...settings, model: modelKeyOf(f, MODELS[settings.model].resolution) })}
-                      >
-                        <b dir="ltr">{FAMILIES[f].name}</b>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="fine">{FAMILIES[MODELS[settings.model].family].note}</p>
-                </div>
-                <div className="field">
-                  <span>רזולוציה</span>
-                  <div className="seg">
-                    {(["720p", "1080p"] as Resolution[]).map((r) => {
-                      const k = modelKeyOf(MODELS[settings.model].family, r);
-                      return (
-                        <button key={r} type="button" aria-pressed={settings.model === k} onClick={() => setSettings({ ...settings, model: k })}>
-                          <b dir="ltr">{r}</b>
-                          <small>
-                            {accounts ? `${CREDITS_PER_CLIP[k]} קרדיטים לקליפ` : <span dir="ltr">${MODELS[k].pricePerClip.toFixed(2)} לקליפ</span>}
-                          </small>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="fine">קליפ של 5 שניות לכל חלל.</p>
-                </div>
-              </>
             )}
           </section>
         </aside>
@@ -625,50 +573,231 @@ export default function Studio() {
 
       {shots.length > 0 && (
         <div className="bar">
-          <div className="bar-inner">
-            <div className="bar-info">
-              <b>{shots.length} חללים, כ-{totalSeconds} שניות</b>
-              <span>
-                {accounts && signedIn ? `יתרה: ${balance} קרדיטים. ` : ""}
-                {live
-                  ? busyCount
-                    ? `${busyCount} קליפים בעבודה`
-                    : `${readyCount} מתוך ${shots.length} עם וידאו AI`
-                  : "תצוגה מקדימה עם תנועה מדומה"}
-              </span>
-            </div>
-            <div className="bar-actions">
-              <button type="button" className="btn btn-ghost" onClick={() => setPlayer(true)}>
+          <div className="bar-info">
+            <b>
+              {shots.length} חללים · {totalSeconds} שנ׳
+            </b>
+            <button type="button" className="link" onClick={() => setPlayer(true)}>
+              צפייה ברילס
+            </button>
+          </div>
+          <div className="bar-actions">
+            {live ? (
+              cta
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={() => setPlayer(true)}>
                 צפייה ברילס
               </button>
-              {live && accounts && !signedIn && me && (
-                <Link className="btn btn-primary" href="/login?next=/">
-                  התחברות כדי ליצור וידאו
-                </Link>
-              )}
-              {live && accounts && signedIn && toGenerate.length > 0 && creditsNeeded > balance && (
-                <Link className="btn btn-primary" href="/pricing">
-                  חסרים {creditsNeeded - balance} קרדיטים
-                </Link>
-              )}
-              {live && (!accounts || (signedIn && (creditsNeeded <= balance || !toGenerate.length))) && (
-                <button type="button" className="btn btn-primary" onClick={generateAll} disabled={!toGenerate.length || locked}>
-                  {toGenerate.length ? (
-                    <>
-                      יצירת וידאו ל-{toGenerate.length} חללים{" "}
-                      {accounts ? <small>{creditsNeeded} קרדיטים</small> : <small dir="ltr">~${cost.toFixed(2)}</small>}
-                    </>
-                  ) : busyCount ? (
-                    "יוצר…"
-                  ) : (
-                    "כל הקליפים מוכנים"
-                  )}
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
+
+      {shown && (
+        <ShotSheet
+          open={Boolean(openShot)}
+          shot={shown}
+          index={shownIndex}
+          count={shots.length}
+          aspect={settings.aspect}
+          img={media[shown.id]?.img ?? ""}
+          vid={media[shown.id]?.vid}
+          stale={shown.status === "done" && shown.genSig !== sigOf(shown, settings.aspect, style)}
+          live={live}
+          canGenerate={live && !locked}
+          style={style}
+          onChange={(patch) => update(shown.id, patch)}
+          onMove={(d) => move(shown.id, d)}
+          onRemove={() => {
+            setOpenShot(null);
+            setLastShot(null);
+            removeShot(shown.id);
+          }}
+          onGenerate={() => generate(shown.id)}
+          onClose={() => setOpenShot(null)}
+        />
+      )}
+
+      <BrandSheet
+        open={panel === "brand"}
+        onClose={() => setPanel(null)}
+        brand={brand}
+        logoUrl={logo?.url}
+        busy={brandBusy}
+        error={brandError}
+        canRead={brandReady}
+        onRead={fetchBrand}
+        onChange={patchBrand}
+        onRemove={removeBrand}
+        onLogo={setLogoBlob}
+      />
+
+      <Sheet open={panel === "details"} onClose={() => setPanel(null)} title="פרטי הפרויקט">
+        <p className="fine">מופיעים בפתיחה ובכרטיס הסיום של הרילס.</p>
+        <label className="field">
+          <span>שם הפרויקט</span>
+          <input value={info.name} onChange={(e) => setInfo({ ...info, name: e.target.value })} placeholder="למשל: Olive Residences" />
+        </label>
+        <label className="field">
+          <span>מיקום</span>
+          <input value={info.location} onChange={(e) => setInfo({ ...info, location: e.target.value })} placeholder="למשל: זכרון יעקב" />
+        </label>
+        <label className="field">
+          <span>שורת מחיר</span>
+          <input value={info.price} onChange={(e) => setInfo({ ...info, price: e.target.value })} placeholder="למשל: 4 חדרים החל מ-2,890,000 ₪" />
+        </label>
+        <label className="field">
+          <span>קריאה לפעולה</span>
+          <input value={info.cta} onChange={(e) => setInfo({ ...info, cta: e.target.value })} placeholder="למשל: לתיאום סיור בדירה לדוגמה" />
+        </label>
+        <div className="row-2">
+          <label className="field">
+            <span>טלפון</span>
+            <input dir="ltr" inputMode="tel" value={info.phone} onChange={(e) => setInfo({ ...info, phone: e.target.value })} placeholder="*5555" />
+          </label>
+          <label className="field">
+            <span>אתר</span>
+            <input dir="ltr" inputMode="url" value={info.website ?? ""} onChange={(e) => setInfo({ ...info, website: e.target.value })} placeholder="yourcompany.co.il" />
+          </label>
+        </div>
+        <div className="row-2">
+          <div className="field">
+            <span>לוגו</span>
+            <label className="file">
+              <input type="file" accept="image/png,image/svg+xml,image/webp,image/jpeg" hidden onChange={(e) => e.target.files?.[0] && setLogoBlob(e.target.files[0])} />
+              {logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logo.url} alt="הלוגו שהועלה" />
+              ) : (
+                "העלאת לוגו"
+              )}
+            </label>
+            {logo && (
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  URL.revokeObjectURL(logo.url);
+                  setLogo(null);
+                  remove("logo");
+                }}
+              >
+                הסרה
+              </button>
+            )}
+          </div>
+          <label className="field">
+            <span>צבע לכרטיס הסיום</span>
+            <span className="color">
+              <input type="color" value={info.brand} onChange={(e) => setInfo({ ...info, brand: e.target.value })} />
+              <code dir="ltr">{info.brand}</code>
+            </span>
+          </label>
+        </div>
+      </Sheet>
+
+      <Sheet open={panel === "style"} onClose={() => setPanel(null)} title="עריכה">
+        <div className="field">
+          <span>תצוגה</span>
+          <div className="seg">
+            <button type="button" aria-pressed={settings.layout === "full"} onClick={() => setSettings({ ...settings, layout: "full" })}>
+              <b>מסך מלא</b>
+              <small>סיור בנכס</small>
+            </button>
+            <button type="button" aria-pressed={settings.layout === "split"} onClick={() => setSettings({ ...settings, layout: "split" })}>
+              <b>לפני ואחרי</b>
+              <small>תמונה מול וידאו</small>
+            </button>
+          </div>
+        </div>
+        <div className="field">
+          <span>קצב</span>
+          <div className="seg">
+            {(Object.keys(PACES) as Pace[]).map((k) => (
+              <button key={k} type="button" aria-pressed={settings.pace === k} onClick={() => setSettings({ ...settings, pace: k })}>
+                <b>{PACES[k].he}</b>
+                <small>{PACES[k].seconds} שניות לחלל</small>
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="toggle">
+          <span>
+            <b>שמות החללים על המסך</b>
+          </span>
+          <input type="checkbox" role="switch" checked={settings.labels} onChange={(e) => setSettings({ ...settings, labels: e.target.checked })} />
+        </label>
+        <div className="field">
+          <span>מוזיקה</span>
+          <div className="music">
+            <label className="btn btn-outline btn-small">
+              <input
+                type="file"
+                accept="audio/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (music) URL.revokeObjectURL(music.url);
+                  setMusic({ blob: f, url: URL.createObjectURL(f), name: f.name });
+                  save("music", f);
+                }}
+              />
+              {music ? "החלפה" : "העלאת קובץ"}
+            </label>
+            {music && (
+              <>
+                <span className="music-name" dir="auto">{music.name}</span>
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => {
+                    URL.revokeObjectURL(music.url);
+                    setMusic(null);
+                    remove("music");
+                  }}
+                >
+                  הסרה
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </Sheet>
+
+      <Sheet open={panel === "model"} onClose={() => setPanel(null)} title="מודל וידאו">
+        <div className="field">
+          <span>מודל</span>
+          <div className="seg">
+            {(Object.keys(FAMILIES) as Family[]).map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={MODELS[settings.model].family === f}
+                onClick={() => setSettings({ ...settings, model: modelKeyOf(f, MODELS[settings.model].resolution) })}
+              >
+                <b dir="ltr">{FAMILIES[f].name}</b>
+              </button>
+            ))}
+          </div>
+          <p className="fine">{FAMILIES[MODELS[settings.model].family].note}</p>
+        </div>
+        <div className="field">
+          <span>רזולוציה</span>
+          <div className="seg">
+            {(["720p", "1080p"] as Resolution[]).map((r) => {
+              const k = modelKeyOf(MODELS[settings.model].family, r);
+              return (
+                <button key={r} type="button" aria-pressed={settings.model === k} onClick={() => setSettings({ ...settings, model: k })}>
+                  <b dir="ltr">{r}</b>
+                  <small>{accounts ? `${CREDITS_PER_CLIP[k]} קרדיטים לקליפ` : <span dir="ltr">${MODELS[k].pricePerClip.toFixed(2)} לקליפ</span>}</small>
+                </button>
+              );
+            })}
+          </div>
+          <p className="fine">קליפ של 5 שניות לכל חלל.</p>
+        </div>
+      </Sheet>
 
       {player && (
         <PlayerSheet
@@ -678,10 +807,51 @@ export default function Studio() {
           info={info}
           settings={settings}
           logo={logo?.blob}
+          brand={brand}
           musicUrl={music?.url}
           onClose={() => setPlayer(false)}
         />
       )}
+    </div>
+  );
+}
+
+function Row(p: { icon: React.ReactNode; title: string; value: React.ReactNode; onClick: () => void }) {
+  return (
+    <button type="button" className="row" onClick={p.onClick}>
+      {p.icon}
+      <span>
+        <b>{p.title}</b>
+        <small>{p.value}</small>
+      </span>
+      <IconChevron className="row-go" />
+    </button>
+  );
+}
+
+// Output formats as tabs; the underline slides to the chosen one.
+function FormatTabs({ value, onChange }: { value: Aspect; onChange: (a: Aspect) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [line, setLine] = useState<{ x: number; w: number } | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = ref.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (el) setLine({ x: el.offsetLeft, w: el.offsetWidth });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    document.fonts?.ready.then(measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [value]);
+  return (
+    <div className="tabs" role="tablist" aria-label="פורמט" ref={ref}>
+      {(Object.keys(ASPECTS) as Aspect[]).map((a) => (
+        <button key={a} type="button" role="tab" aria-selected={value === a} onClick={() => onChange(a)}>
+          <IconFrame w={ASPECTS[a].w} h={ASPECTS[a].h} />
+          <span>{ASPECTS[a].hint}</span>
+        </button>
+      ))}
+      {line && <i className="tabs-line" style={{ width: line.w, transform: `translateX(${line.x}px)` }} />}
     </div>
   );
 }

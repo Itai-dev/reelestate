@@ -51,7 +51,7 @@ function Waiting() {
       <h1>מאשרים את התשלום…</h1>
       <p>{tries > 40 ? "זה לוקח יותר מהרגיל. הקרדיטים יופיעו בחשבון ברגע שהאישור יגיע." : "זה לוקח כמה שניות."}</p>
       {tries > 40 && (
-        <Link className="btn btn-ghost" href="/account">
+        <Link className="btn btn-outline" href="/account">
           לחשבון
         </Link>
       )}

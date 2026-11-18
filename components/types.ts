@@ -37,8 +37,10 @@ export type Info = ReelInfo;
 
 export type Media = Record<string, { img: string; vid?: string }>;
 
-export const promptOf = (s: Shot) => s.customPrompt ?? buildPrompt(s);
+// style: the brand's photo language, when the brand is applied to the video.
+export const promptOf = (s: Shot, style?: string) =>
+  s.customPrompt ?? (style ? `${buildPrompt(s)} Visual style: ${style}` : buildPrompt(s));
 
 // What a clip depends on. If it changes after generation, the clip is out of date.
-export const sigOf = (s: Shot, aspect: Aspect) =>
-  `${aspect}|${s.fx.toFixed(2)}|${s.fy.toFixed(2)}|${promptOf(s)}`;
+export const sigOf = (s: Shot, aspect: Aspect, style?: string) =>
+  `${aspect}|${s.fx.toFixed(2)}|${s.fy.toFixed(2)}|${promptOf(s, style)}`;

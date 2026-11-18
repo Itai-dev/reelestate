@@ -46,7 +46,11 @@ export default function SiteNav() {
     <nav className="nav" aria-label="ראשי">
       <div className="nav-inner">
         <Link href="/" className="nav-brand" dir="ltr">
-          Reel Estate
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <path d="M3.5 11.2L12 4l8.5 7.2V20h-17z" />
+            <path d="M10 10.5v6l5-3z" className="nav-play" />
+          </svg>
+          reel estate
         </Link>
         <div className="nav-links">
           {link("/", "סטודיו")}
@@ -59,7 +63,7 @@ export default function SiteNav() {
                 <b>{me.credits?.total ?? 0}</b> קרדיטים
               </Link>
             ) : (
-              <Link href={`/login?next=${encodeURIComponent(path || "/")}`} className="btn btn-ghost btn-small">
+              <Link href={`/login?next=${encodeURIComponent(path || "/")}`} className="btn btn-outline btn-small">
                 התחברות
               </Link>
             ))}

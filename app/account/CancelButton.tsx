@@ -31,7 +31,7 @@ export default function CancelButton({ until }: { until: string }) {
       <p>החיוב החודשי ייעצר. הקרדיטים שנשארו זמינים עד {until}.</p>
       {error && <p className="error-inline">{error}</p>}
       <div className="row-actions">
-        <button type="button" className="btn btn-ghost btn-small" onClick={cancel} disabled={step === "busy"}>
+        <button type="button" className="btn btn-outline btn-small" onClick={cancel} disabled={step === "busy"}>
           {step === "busy" ? "מבטל…" : "כן, לבטל"}
         </button>
         <button type="button" className="link" onClick={() => setStep("idle")}>

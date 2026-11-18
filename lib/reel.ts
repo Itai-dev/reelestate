@@ -3,6 +3,7 @@
 // records it to a video file in the browser.
 import { coverRect } from "./image";
 import { MOTIONS, type MotionId } from "./presets";
+import { gradeFilter, gradeWash, inkOn, type Grade } from "./brand";
 
 export type ReelClip = {
   photo: HTMLCanvasElement; // the photo, already cropped to the output frame
@@ -18,7 +19,11 @@ export type ReelInfo = {
   cta: string;
   phone: string;
   brand: string;
+  website?: string;
 };
+
+// The brand's look on the reel: its fonts, accent colour and colour grade.
+export type ReelLook = { heading: string; body: string; accent: string; grade?: Grade };
 
 export type ReelSpec = {
   width: number;
@@ -29,10 +34,11 @@ export type ReelSpec = {
   layout: "full" | "split";
   labels: boolean;
   clipSeconds: number;
+  look?: ReelLook;
 };
 
 export const FONT_DISPLAY = '"Bellefair", "Frank Ruhl Libre", serif';
-export const FONT_UI = '"IBM Plex Sans Hebrew", "Heebo", system-ui, sans-serif';
+export const FONT_UI = '"Rubik", "Heebo", system-ui, sans-serif';
 
 const XF = 0.6; // crossfade between clips
 const END = 3.6; // end card length
@@ -47,17 +53,6 @@ const ease = (t: number) => 0.5 - Math.cos(Math.PI * clamp(t)) / 2;
 const windowed = (t: number, a: number, b: number, f: number) =>
   clamp(Math.min((t - a) / f, (b - t) / f));
 
-function luminance(hex: string) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return 0;
-  const n = parseInt(m[1], 16);
-  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
-}
-
 export class Reel {
   readonly segs: Seg[];
   readonly endStart: number;
@@ -65,6 +60,11 @@ export class Reel {
   private ctx: CanvasRenderingContext2D;
   private u: number; // 1% of the short side
   private tall: boolean;
+  private fDisplay: string;
+  private fUi: string;
+  private accent: string;
+  private filter: string | null;
+  private wash: string | null;
 
   constructor(
     readonly canvas: HTMLCanvasElement,
@@ -75,6 +75,11 @@ export class Reel {
     this.ctx = canvas.getContext("2d")!;
     this.u = Math.min(spec.width, spec.height) / 100;
     this.tall = spec.height / spec.width > 1.5;
+    this.fDisplay = spec.look?.heading ?? FONT_DISPLAY;
+    this.fUi = spec.look?.body ?? FONT_UI;
+    this.accent = spec.look?.accent ?? "rgba(255,255,255,0.9)";
+    this.filter = spec.look?.grade ? gradeFilter(spec.look.grade) : null;
+    this.wash = spec.look?.grade ? gradeWash(spec.look.grade) : null;
     let t = 0;
     this.segs = spec.clips.map((clip) => {
       const vd = clip.video && Number.isFinite(clip.video.duration) ? clip.video.duration - 0.08 : Infinity;
@@ -163,6 +168,7 @@ export class Reel {
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
+    if (this.filter) ctx.filter = this.filter;
     if (!still && video && video.readyState >= 2 && video.videoWidth) {
       const r = coverRect(video.videoWidth, video.videoHeight, w, h);
       ctx.drawImage(video, r.x, r.y, r.w, r.h, x, y, w, h);
@@ -187,6 +193,12 @@ export class Reel {
       const cy = y + h / 2 + oy * h;
       ctx.drawImage(photo, r.x, r.y, r.w, r.h, cx - dw / 2, cy - dh / 2, dw, dh);
     }
+    ctx.filter = "none";
+    if (this.wash) {
+      ctx.globalCompositeOperation = "soft-light";
+      ctx.fillStyle = this.wash;
+      ctx.fillRect(x, y, w, h);
+    }
     ctx.restore();
   }
 
@@ -199,7 +211,7 @@ export class Reel {
   ) {
     const { ctx } = this;
     let px = size;
-    const font = opts.font ?? FONT_UI;
+    const font = opts.font ?? this.fUi;
     const weight = opts.weight ?? 400;
     ctx.font = `${weight} ${px}px ${font}`;
     if (opts.maxW) {
@@ -272,7 +284,7 @@ export class Reel {
       ctx.globalAlpha = k;
       const lift = (1 - ease(k)) * 2 * u;
       if (info.name)
-        this.text(info.name, right, base - 4.6 * u + lift, 8.4 * u, { font: FONT_DISPLAY, maxW: W - 14 * u, shadow: true });
+        this.text(info.name, right, base - 4.6 * u + lift, 8.4 * u, { font: this.fDisplay, maxW: W - 14 * u, shadow: true });
       if (info.location)
         this.text(info.location, right, base + 0.6 * u + lift, 3.4 * u, { weight: 400, color: "rgba(255,255,255,0.88)", shadow: true });
       ctx.globalAlpha = 1;
@@ -286,8 +298,8 @@ export class Reel {
         const a = windowed(t, start, end, 0.35);
         if (a <= 0 || !seg.clip.label) return;
         ctx.globalAlpha = a;
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        ctx.fillRect(right - 6 * u, base - 4.4 * u, 6 * u, Math.max(2, 0.28 * u));
+        ctx.fillStyle = this.accent;
+        ctx.fillRect(right - 6 * u, base - 4.4 * u, 6 * u, Math.max(3, 0.4 * u));
         this.text(seg.clip.label, right, base, 3.8 * u, { weight: 500, shadow: true });
         ctx.globalAlpha = 1;
       });
@@ -315,7 +327,7 @@ export class Reel {
 
     // pills above the panes
     const pill = (label: string, cx: number) => {
-      ctx.font = `600 ${3 * u}px ${FONT_UI}`;
+      ctx.font = `600 ${3 * u}px ${this.fUi}`;
       const w = ctx.measureText(label).width + 4 * u;
       const h = 5.2 * u;
       const y = py - h - 2 * u;
@@ -329,7 +341,7 @@ export class Reel {
     pill("הסרטון", leftX + paneW / 2);
 
     const info = spec.info;
-    if (info.name) this.text(info.name, W / 2, py - 14 * u, 6.6 * u, { font: FONT_DISPLAY, align: "center", maxW: W - 10 * u });
+    if (info.name) this.text(info.name, W / 2, py - 14 * u, 6.6 * u, { font: this.fDisplay, align: "center", maxW: W - 10 * u });
 
     this.segs.forEach((seg, i) => {
       const a = windowed(t, seg.start + 0.3, seg.start + seg.len - 0.25, 0.3);
@@ -350,7 +362,7 @@ export class Reel {
     const H = spec.height;
     const info = spec.info;
     const brand = /^#[0-9a-f]{6}$/i.test(info.brand) ? info.brand : "#1d1e22";
-    const ink = luminance(brand) > 0.45 ? "#17181b" : "#ffffff";
+    const ink = inkOn(brand);
     const local = t - this.endStart;
 
     ctx.globalAlpha = 0.93 * clamp(local / XF);
@@ -366,7 +378,7 @@ export class Reel {
       gap(5 * u);
     }
     if (info.name) {
-      items.push({ h: 8 * u, at: 0.4, draw: (y) => this.text(info.name, W / 2, y + 6.6 * u, 8 * u, { font: FONT_DISPLAY, align: "center", color: ink, maxW: W - 12 * u }) });
+      items.push({ h: 8 * u, at: 0.4, draw: (y) => this.text(info.name, W / 2, y + 6.6 * u, 8 * u, { font: this.fDisplay, align: "center", color: ink, maxW: W - 12 * u }) });
     }
     if (info.price) {
       gap(2.2 * u);
@@ -390,6 +402,10 @@ export class Reel {
     if (info.phone) {
       gap(1.6 * u);
       items.push({ h: 6 * u, at: 0.9, draw: (y) => this.text(info.phone, W / 2, y + 5 * u, 5.4 * u, { align: "center", color: ink, weight: 600, dir: "ltr" }) });
+    }
+    if (info.website) {
+      gap(2.2 * u);
+      items.push({ h: 3.6 * u, at: 1.0, draw: (y) => this.text(info.website!, W / 2, y + 3 * u, 3 * u, { align: "center", color: ink, dir: "ltr", maxW: W - 12 * u }) });
     }
 
     const total = items.reduce((s, i) => s + i.h, 0);

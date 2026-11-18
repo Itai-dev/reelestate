@@ -45,7 +45,7 @@ export default async function AccountPage() {
         <p className="fine">
           {credits.plan} מהמסלול{p.current_period_end && credits.plan ? ` (עד ${date(p.current_period_end)})` : ""}, {credits.extra} נוספים שלא פגים
         </p>
-        <Link className="btn btn-ghost btn-small" href="/pricing#packs">
+        <Link className="btn btn-outline btn-small" href="/pricing#packs">
           קניית קרדיטים
         </Link>
       </section>
@@ -58,7 +58,7 @@ export default async function AccountPage() {
               מסלול {plan.name}, {ils(plan.price)} לחודש. החיוב הבא בסביבות {date(p.current_period_end)}.
             </p>
             <div className="row-actions">
-              <Link className="btn btn-ghost btn-small" href="/pricing">
+              <Link className="btn btn-outline btn-small" href="/pricing">
                 החלפת מסלול
               </Link>
               <CancelButton until={date(p.current_period_end)} />

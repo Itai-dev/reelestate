@@ -88,3 +88,12 @@ export async function fetchVideo(url: string): Promise<Blob> {
   }
   throw new Error("clip download failed");
 }
+
+export async function readBrand(url: string): Promise<{ brand: import("./brand").Brand; logo: string | null }> {
+  const r = await fetch("/api/brand", {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers() },
+    body: JSON.stringify({ url }),
+  });
+  return json(r);
+}

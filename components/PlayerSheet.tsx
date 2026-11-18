@@ -5,6 +5,7 @@ import { ASPECTS, PACES, roomById } from "@/lib/presets";
 import { cropToFrame, decode } from "@/lib/image";
 import { FONT_DISPLAY, FONT_UI, Reel, ReelPlayer, canRecord, type ReelClip } from "@/lib/reel";
 import type { Info, Media, Settings, Shot } from "./types";
+import { fontStack, loadBrandFonts, luminance, type Brand } from "@/lib/brand";
 
 type Props = {
   shots: Shot[];
@@ -13,6 +14,7 @@ type Props = {
   info: Info;
   settings: Settings;
   logo?: Blob;
+  brand?: Brand | null;
   musicUrl?: string;
   onClose: () => void;
 };
@@ -56,6 +58,16 @@ export default function PlayerSheet(p: Props) {
           document.fonts.load(`500 40px ${FONT_UI}`, "שלום Aa"),
           document.fonts.load(`600 40px ${FONT_UI}`, "054"),
         ]).catch(() => {});
+        const b = p.brand;
+        if (b) await Promise.race([loadBrandFonts(b), new Promise((r) => setTimeout(r, 2500))]);
+        const look = b
+          ? {
+              heading: fontStack(b.fonts.heading, b.fonts.headingKind),
+              body: fontStack(b.fonts.body, "sans"),
+              accent: luminance(b.colors.primary) > 0.2 ? b.colors.primary : luminance(b.colors.accent) > 0.2 ? b.colors.accent : "#ffffff",
+              grade: b.applyGrade ? b.grade : undefined,
+            }
+          : undefined;
         const clips: ReelClip[] = [];
         for (const s of p.shots) {
           const blob = p.imageBlob(s.id);
@@ -87,6 +99,7 @@ export default function PlayerSheet(p: Props) {
           layout: p.settings.layout,
           labels: p.settings.labels,
           clipSeconds: PACES[p.settings.pace].seconds,
+          look,
         });
         player = new ReelPlayer(reel, p.musicUrl);
         player.onTime = (x) => setT(x);
@@ -162,7 +175,7 @@ export default function PlayerSheet(p: Props) {
     <div className="sheet" role="dialog" aria-modal="true" aria-label="הרילס">
       <header className="sheet-head">
         <h2>הרילס</h2>
-        <button type="button" className="btn btn-ghost-dark" onClick={p.onClose} disabled={phase === "recording"}>
+        <button type="button" className="btn btn-onDark" onClick={p.onClose} disabled={phase === "recording"}>
           סגירה
         </button>
       </header>
@@ -221,11 +234,11 @@ export default function PlayerSheet(p: Props) {
                     הורדה
                   </a>
                   {canShare && (
-                    <button type="button" className="btn btn-ghost-dark" onClick={share}>
+                    <button type="button" className="btn btn-onDark" onClick={share}>
                       שיתוף או שמירה לגלריה
                     </button>
                   )}
-                  <button type="button" className="btn btn-ghost-dark" onClick={exportVideo}>
+                  <button type="button" className="btn btn-onDark" onClick={exportVideo}>
                     ייצוא מחדש
                   </button>
                 </div>

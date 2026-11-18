@@ -49,7 +49,7 @@ export default async function PricingPage() {
               {isCurrent ? (
                 <span className="btn btn-current">המסלול שלך</span>
               ) : (
-                <Link className={`btn ${p.featured ? "btn-primary" : "btn-ghost"}`} href={`/checkout?product=${id}`}>
+                <Link className={`btn ${p.featured ? "btn-primary" : "btn-outline"}`} href={`/checkout?product=${id}`}>
                   {currentPlan ? `מעבר למסלול ${p.name}` : `הצטרפות למסלול ${p.name}`}
                 </Link>
               )}
@@ -68,7 +68,7 @@ export default async function PricingPage() {
             <div key={id} className="pack">
               <b>{PACKS[id].name}</b>
               <span>{ils(PACKS[id].price)}</span>
-              <Link className="btn btn-ghost btn-small" href={`/checkout?product=${id}`}>
+              <Link className="btn btn-outline btn-small" href={`/checkout?product=${id}`}>
                 קנייה
               </Link>
             </div>
