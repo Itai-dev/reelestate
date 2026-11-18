@@ -37,6 +37,7 @@ import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark } from "./Icons";
 import { statusLine } from "./ShotCard";
+import Thinking from "./Thinking";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
@@ -402,6 +403,21 @@ export default function Studio() {
     { id: "video", label: "סרטון", sub: live ? `${readyCount}/${shots.length || 0} קליפים` : "תצוגה מקדימה" },
   ] as const;
 
+  const stepIndex = STEPS.findIndex((x) => x.id === step);
+  const genTotal = shots.filter((s) => BUSY.has(s.status) || (s.status === "done" && s.genSig === sigOf(s, settings.aspect, style))).length;
+  const genProgress = genTotal ? (genTotal - busyCount + 0.15) / genTotal : 0;
+  const GEN_LINES = useMemo(
+    () => [
+      `יוצר וידאו ל-${busyCount} חללים`,
+      "המודל לומד את עומק החלל",
+      "מתכנן את תנועת המצלמה",
+      "מרנדר אור וצללים",
+      "שומר על קווים ישרים ועל הרהיטים במקום",
+      "כל קליפ לוקח בין דקה לחמש דקות",
+    ],
+    [busyCount],
+  );
+
   // one main action per step
   let primary: React.ReactNode = null;
   if (step === "photos") {
@@ -450,18 +466,6 @@ export default function Studio() {
 
   return (
     <div className="app">
-      <nav className="steps" aria-label="שלבים">
-        {STEPS.map((st, i) => (
-          <button key={st.id} type="button" className="step" aria-current={step === st.id ? "step" : undefined} onClick={() => go(st.id)}>
-            <span className={`step-dot${done[st.id] ? " is-done" : ""}`}>{done[st.id] && step !== st.id ? <IconCheck /> : i + 1}</span>
-            <span className="step-text">
-              <b>{st.label}</b>
-              <small>{st.sub}</small>
-            </span>
-          </button>
-        ))}
-      </nav>
-
       {config?.mode === "demo" && <p className="mode">מצב דמו: התצוגה המקדימה מזיזה את התמונות בלבד. כדי לייצר וידאו AI מוסיפים מפתח FAL_KEY בהגדרות השרת.</p>}
       {config?.mode === "mock" && <p className="mode">מצב בדיקה: הקליפים מדומים ולא עולים כסף.</p>}
 
@@ -497,8 +501,41 @@ export default function Studio() {
       <main className="layout">
         <div className="col-main">
           {picker}
+          <nav className="progress-head" aria-label="שלבים">
+            <div className="progress-top">
+              {stepIndex > 0 ? (
+                <button type="button" className="back" onClick={() => go(STEPS[stepIndex - 1].id)}>
+                  <IconChevron className="flip" /> {STEPS[stepIndex - 1].label}
+                </button>
+              ) : (
+                <span />
+              )}
+              <span className="progress-count">
+                שלב {stepIndex + 1} מתוך 3
+              </span>
+            </div>
+            <ol className="progress-steps">
+              {STEPS.map((st, i) => (
+                <li key={st.id} className={i < stepIndex || (done[st.id] && i !== stepIndex) ? "is-done" : i === stepIndex ? "is-now" : ""}>
+                  <button type="button" onClick={() => go(st.id)} aria-current={step === st.id ? "step" : undefined}>
+                    <i />
+                    <span>{st.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
 
-          {step === "photos" && (
+          {!hydrated && <Thinking lines={["פותח את הפרויקט"]} />}
+
+          {hydrated && busyCount > 0 && step !== "video" && (
+            <button type="button" className="live-strip" onClick={() => go("video")}>
+              <Thinking compact lines={GEN_LINES} progress={genProgress} />
+              <span>לסרטון</span>
+            </button>
+          )}
+
+          {hydrated && step === "photos" && (
             <section className="stage" aria-labelledby="t-photos">
               <header className="stage-head">
                 <h1 id="t-photos">תמונות הנכס</h1>
@@ -516,6 +553,7 @@ export default function Studio() {
                 </div>
               ) : (
                 <>
+                  {adding > 0 && <Thinking compact lines={[`מוסיף ${adding} תמונות`, "מקטין ומיישר אותן"]} />}
                   <div className="toolbar">
                     <span>{shots.length} חללים, לפי סדר ההופעה בסרטון</span>
                     {shots.length > 1 && (
@@ -655,6 +693,14 @@ export default function Studio() {
                 </div>
               ) : (
                 <>
+                  {busyCount > 0 && (
+                    <div className="block">
+                      <Thinking lines={GEN_LINES} progress={genProgress} />
+                      <p className="fine">
+                        {genTotal - busyCount} מתוך {genTotal} קליפים מוכנים. אפשר לסגור את המסך, היצירה ממשיכה ונשמרת.
+                      </p>
+                    </div>
+                  )}
                   <button type="button" className="poster" onClick={() => setPlayer(true)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={media[shots[0].id]?.img} alt="" />
@@ -843,9 +889,16 @@ export default function Studio() {
       </main>
 
       <div className="bar">
+        {busyCount > 0 && (
+          <span className="bar-progress" aria-hidden>
+            <span style={{ width: `${genProgress * 100}%` }} />
+          </span>
+        )}
         <div className="bar-info">
-          <b>{STEPS.find((x) => x.id === step)!.label}</b>
-          <small>{costNote ?? STEPS.find((x) => x.id === step)!.sub}</small>
+          <b>
+            שלב {stepIndex + 1}/3 · {STEPS[stepIndex].label}
+          </b>
+          <small>{busyCount ? `${genTotal - busyCount}/${genTotal} קליפים מוכנים` : costNote ?? STEPS[stepIndex].sub}</small>
         </div>
         <div className="bar-actions">{primary}</div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Brand } from "@/lib/brand";
 import { fontStack } from "@/lib/brand";
+import Thinking from "./Thinking";
 
 type Props = {
   brand: Brand | null;
@@ -16,7 +17,6 @@ type Props = {
   onLogo: (f: File) => void;
 };
 
-const STEPS = ["קורא את האתר", "אוסף צבעים, פונטים ולוגו", "מסתכל על התמונות ומבין את הווייב"];
 
 export default function BrandPanel(p: Props) {
   const [url, setUrl] = useState("");
@@ -42,13 +42,9 @@ export default function BrandPanel(p: Props) {
       {p.error && <p className="error-inline">{p.error}</p>}
 
       {p.busy && (
-        <ol className="brand-steps" aria-live="polite">
-          {STEPS.map((s, i) => (
-            <li key={s} style={{ animationDelay: `${i * 2.2}s` }}>
-              <span className="spinner" aria-hidden /> {s}
-            </li>
-          ))}
-        </ol>
+        <Thinking
+          lines={["פותח את האתר", "אוסף לוגו, צבעים ופונטים", "מסתכל על התמונות באתר", "מנסח את שפת הצילום של המותג", "כמעט מוכן"]}
+        />
       )}
 
       {!p.busy && !b && (
