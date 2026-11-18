@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getUser, sb } from "@/lib/cloud";
+import Logo from "./Logo";
 
 export type Me = {
   accounts: boolean;
@@ -55,17 +56,7 @@ export default function SiteNav() {
   return (
     <nav className="nav" aria-label="ראשי">
       <div className="nav-inner">
-        <Link href="/" className="nav-brand" dir="ltr">
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <path d="M3.5 11.2L12 4l8.5 7.2V20h-17z" />
-            <path d="M10 10.5v6l5-3z" className="nav-play" />
-          </svg>
-          reel estate
-        </Link>
         <div className="nav-links">
-          {link("/", "סטודיו")}
-          {link("/pricing", "מחירים")}
-          {me?.user && link("/account", "חשבון")}
           {acct === null ? link("/login", "התחברות") : acct ? (
             <Link href="/projects" className="nav-me" aria-current={path === "/projects" ? "page" : undefined}>
               {acct.avatar ? (
@@ -77,7 +68,13 @@ export default function SiteNav() {
               הפרויקטים שלי
             </Link>
           ) : null}
+          {link("/", "סטודיו")}
+          {link("/pricing", "מחירים")}
+          {me?.user && link("/account", "חשבון")}
         </div>
+        <Link href="/" className="nav-brand" aria-label="Reel Estate, לסטודיו">
+          <Logo size={26} />
+        </Link>
         <div className="nav-account">
           {me?.accounts &&
             (me.user ? (

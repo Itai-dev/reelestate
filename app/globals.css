@@ -3931,3 +3931,86 @@ h2,
   gap: 16px;
   flex-wrap: wrap;
 }
+
+/* ---------- logo + nav order: me, studio, pricing on the right; logo on the left ---------- */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+}
+
+.logo-mark {
+  display: block;
+  flex: none;
+}
+
+.logo-word {
+  font-family: "Space Grotesk", "Assistant", sans-serif;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.nav-inner {
+  grid-template-columns: 1fr auto;
+}
+
+.nav-links {
+  grid-column: 1;
+  justify-self: start;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-brand {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  letter-spacing: normal;
+  font-family: inherit;
+}
+
+.nav-me {
+  padding: 4px 12px 4px 4px !important;
+  margin-inline-end: 8px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: var(--ivory);
+  color: var(--ink) !important;
+}
+
+.nav-me[aria-current="page"] {
+  text-decoration: none !important;
+  border-color: var(--ink);
+}
+
+.foot-logo {
+  font-family: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+.foot-logo .logo-word {
+  font-size: 16px;
+}
+
+@media (max-width: 759px) {
+  .logo-word {
+    font-size: 17px;
+  }
+  .nav-me {
+    font-size: 0 !important;
+    padding: 2px !important;
+    margin-inline-end: 2px;
+  }
+}
+
+.nav-brand svg.logo-mark {
+  display: block;
+  width: auto;
+  height: auto;
+  fill: none;
+}

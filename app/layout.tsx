@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
+import Logo from "@/components/Logo";
 
 export const metadata: Metadata = {
   title: "Reel Estate — מתמונות של נכס לסרטון",
@@ -22,14 +23,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Rubik:wght@400;500;600&family=Frank+Ruhl+Libre:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=Heebo:wght@300;400;500&family=Bellefair&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=Rubik:wght@400;500;600&family=Frank+Ruhl+Libre:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=Heebo:wght@300;400;500&family=Bellefair&display=swap"
         />
       </head>
       <body>
         <SiteNav />
         {children}
         <footer className="site-foot">
-          <span dir="ltr">Reel Estate</span>
+          <span className="foot-logo"><Logo size={20} /></span>
           <Link href="/pricing">מחירים</Link>
           <Link href="/terms">תנאי שימוש</Link>
           <Link href="/privacy">פרטיות</Link>
