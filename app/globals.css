@@ -3600,3 +3600,54 @@ h2,
   font-size: 13px;
   color: var(--error);
 }
+
+.editbox {
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--hair);
+}
+
+.editbox h3 {
+  font-size: 17px;
+}
+
+.editbox .fine {
+  margin: 4px 0 12px;
+}
+
+.editbox-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.editbox-form input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #d5cdbd;
+  border-radius: 999px;
+  background: var(--ivory);
+}
+
+.editbox-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+}
+
+.versions .chip {
+  font-size: 13px;
+  padding: 6px 12px;
+}

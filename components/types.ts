@@ -1,4 +1,4 @@
-import type { Aspect, LightId, ModelKey, MotionId, Pace, RoomId } from "@/lib/presets";
+import type { Aspect, EditKey, LightId, ModelKey, MotionId, Pace, RoomId } from "@/lib/presets";
 import { buildPrompt } from "@/lib/presets";
 import type { ReelInfo } from "@/lib/reel";
 
@@ -19,7 +19,11 @@ export type Shot = {
   position?: number;
   error?: string;
   requestId?: string;
-  modelKey?: ModelKey;
+  modelKey?: ModelKey | EditKey;
+  // edits of a finished clip: every version, the one being made, and the last failure
+  versions?: { url: string; label: string }[];
+  editLabel?: string;
+  editError?: string;
   pendingSig?: string;
   genSig?: string;
   videoUrl?: string;

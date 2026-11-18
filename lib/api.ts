@@ -1,4 +1,4 @@
-import type { ModelKey } from "./presets";
+import type { EditKey, ModelKey } from "./presets";
 
 const PW_KEY = "reel-estate:pw";
 
@@ -60,7 +60,7 @@ export type GenStatus =
   | { status: "done"; videoUrl: string }
   | { status: "error"; error: string; refunded?: boolean };
 
-export async function checkGeneration(model: ModelKey, id: string): Promise<GenStatus> {
+export async function checkGeneration(model: ModelKey | EditKey, id: string): Promise<GenStatus> {
   const q = new URLSearchParams({ model, id });
   const r = await fetch(`/api/status?${q}`, { headers: headers() });
   return json<GenStatus>(r);
@@ -96,4 +96,13 @@ export async function readBrand(url: string): Promise<{ brand: import("./brand")
     body: JSON.stringify({ url }),
   });
   return json(r);
+}
+
+export async function startEdit(videoUrl: string, prompt: string): Promise<string> {
+  const r = await fetch("/api/edit", {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers() },
+    body: JSON.stringify({ model: "edit720", videoUrl, prompt }),
+  });
+  return (await json<{ requestId: string }>(r)).requestId;
 }

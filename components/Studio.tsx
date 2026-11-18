@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   ASPECTS,
   DEFAULT_MODEL,
+  EDITS,
   FAMILIES,
   MODELS,
   modelKeyOf,
@@ -16,7 +17,7 @@ import {
 } from "@/lib/presets";
 import Link from "next/link";
 import { cropToFrame, normalize } from "@/lib/image";
-import { CREDITS_PER_CLIP } from "@/lib/plans";
+import { CREDITS_PER_CLIP, CREDITS_PER_EDIT } from "@/lib/plans";
 import { refreshMe, useMe } from "./SiteNav";
 import { load, remove, save } from "@/lib/store";
 import {
@@ -27,6 +28,7 @@ import {
   getPassword,
   setPassword,
   readBrand,
+  startEdit,
   startGeneration,
   uploadImage,
   type Config,
@@ -178,7 +180,7 @@ export default function Studio() {
           saved.shots
             .filter((s) => m[s.id])
             .map((s) =>
-              s.status === "preparing" || (BUSY.has(s.status) && !(s.modelKey && s.modelKey in MODELS)) ? { ...s, status: "idle" } : s,
+              s.status === "preparing" || (BUSY.has(s.status) && !(s.modelKey && (s.modelKey in MODELS || s.modelKey.startsWith("edit")))) ? { ...s, status: "idle" } : s,
             ),
         );
         setMedia(m);
@@ -423,6 +425,21 @@ export default function Studio() {
     }
   };
 
+  // Changes a finished clip from one sentence; the earlier versions stay one tap away.
+  const editClip = async (id: string, prompt: string, label: string) => {
+    const s = shotsRef.current.find((x) => x.id === id);
+    if (!s?.videoUrl) return;
+    const versions = s.versions?.length ? s.versions : [{ url: s.videoUrl, label: "מקור" }];
+    update(id, { versions, editError: undefined });
+    try {
+      const requestId = await startEdit(s.videoUrl, prompt);
+      update(id, { status: "queued", requestId, modelKey: "edit720", pendingSig: s.genSig, editLabel: label, position: undefined });
+      refreshMe();
+    } catch (e) {
+      update(id, { editError: e instanceof Error ? e.message : "העריכה נכשלה" });
+    }
+  };
+
   const generateAll = () => {
     shots.filter(needsGeneration).forEach((s) => generate(s.id));
   };
@@ -441,8 +458,19 @@ export default function Studio() {
               const st = await checkGeneration(s.modelKey!, s.requestId!);
               if (st.status === "queued") update(s.id, { status: "queued", position: st.position });
               else if (st.status === "rendering") update(s.id, { status: "rendering" });
-              else if (st.status === "done") update(s.id, { status: "done", videoUrl: st.videoUrl, genSig: s.pendingSig });
-              else {
+              else if (st.status === "done") {
+                const isEdit = s.modelKey!.startsWith("edit");
+                update(s.id, {
+                  status: "done",
+                  videoUrl: st.videoUrl,
+                  genSig: s.pendingSig,
+                  editError: undefined,
+                  versions: isEdit ? [...(s.versions ?? []), { url: st.videoUrl, label: s.editLabel ?? "עריכה" }] : [{ url: st.videoUrl, label: "מקור" }],
+                });
+              } else if (s.modelKey!.startsWith("edit")) {
+                update(s.id, { status: "done", editError: st.refunded ? `${st.error}. הקרדיט הוחזר.` : st.error });
+                if (st.refunded) refreshMe();
+              } else {
                 update(s.id, { status: "error", error: st.refunded ? `${st.error}. הקרדיטים הוחזרו.` : st.error });
                 if (st.refunded) refreshMe();
               }
@@ -1073,6 +1101,9 @@ export default function Studio() {
             removeShot(shown.id);
           }}
           onGenerate={() => generate(shown.id)}
+          onEdit={(prompt, label) => editClip(shown.id, prompt, label)}
+          onPickVersion={(url) => update(shown.id, { videoUrl: url })}
+          editCost={accounts ? `${CREDITS_PER_EDIT.edit720} קרדיט` : `~$${EDITS.edit720.pricePerClip.toFixed(2)}`}
           onClose={() => setOpenShot(null)}
         />
       )}

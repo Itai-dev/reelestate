@@ -7,6 +7,7 @@ import Sheet from "./Sheet";
 import { statusLine } from "./ShotCard";
 import { IconArrow, IconTrash } from "./Icons";
 import { promptOf, type Shot } from "./types";
+import Thinking from "./Thinking";
 
 type Props = {
   open: boolean;
@@ -24,8 +25,19 @@ type Props = {
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
   onGenerate: () => void;
+  onEdit: (prompt: string, label: string) => void;
+  onPickVersion: (url: string) => void;
+  editCost: string;
   onClose: () => void;
 };
+
+const QUICK: { label: string; prompt: string }[] = [
+  { label: "שעת זהב", prompt: "Relight the scene to golden-hour sunset: warm, low sunlight through the windows and a warm sky." },
+  { label: "ערב, אורות דולקים", prompt: "Make it blue-hour evening: dusky sky outside and warm interior lights turned on." },
+  { label: "שמיים כחולים", prompt: "Make the sky outside a clear bright blue with a few soft clouds." },
+  { label: "בלי בלגן", prompt: "Remove clutter and small loose items from surfaces so the space looks clean and staged." },
+  { label: "יותר צמחייה", prompt: "Add a few lush green potted plants that suit the space." },
+];
 
 export default function ShotSheet(p: Props) {
   const [view, setView] = useState<"video" | "frame">("video");
@@ -65,6 +77,10 @@ function Body(p: Props & { view: "video" | "frame"; setView: (v: "video" | "fram
       </div>
 
       <div className="ed-controls">
+        {shot.videoUrl && (shot.status === "done" || (busy && shot.modelKey?.startsWith("edit"))) && p.canGenerate && (
+          <EditBox shot={shot} busy={busy} cost={p.editCost} onEdit={p.onEdit} onPick={p.onPickVersion} />
+        )}
+
         <section className="ed-group" aria-labelledby="ed-room">
           <h3 id="ed-room">איזה חלל זה</h3>
           <div className="chips">
@@ -193,5 +209,58 @@ function Frame(p: { shot: Shot; aspect: Aspect; img: string; onFocus: (fx: numbe
       <img src={p.img} alt="" draggable={false} />
       <div className="frame-window" style={{ left: pct(r.x, shot.imgW), top: pct(r.y, shot.imgH), width: pct(r.w, shot.imgW), height: pct(r.h, shot.imgH) }} />
     </div>
+  );
+}
+
+function EditBox(p: { shot: Shot; busy: boolean; cost: string; onEdit: (prompt: string, label: string) => void; onPick: (url: string) => void }) {
+  const [text, setText] = useState("");
+  const { shot } = p;
+  const send = (prompt: string, label: string) => {
+    if (!prompt.trim() || p.busy) return;
+    p.onEdit(prompt.trim(), label);
+    setText("");
+  };
+  return (
+    <section className="editbox" aria-labelledby="ed-edit">
+      <h3 id="ed-edit">שינוי בקליפ</h3>
+      <p className="fine">כותבים מה לשנות, והקליפ נערך בלי לאבד את התנועה. {p.cost} לכל שינוי, וכל הגרסאות נשמרות.</p>
+      {p.busy ? (
+        <Thinking
+          lines={[`מבצע: ${shot.editLabel ?? "שינוי"}`, "שומר על הקירות, הנוף ותנועת המצלמה", "בדרך כלל פחות מדקה"]}
+        />
+      ) : (
+        <>
+          <div className="chips">
+            {QUICK.map((q) => (
+              <button key={q.label} type="button" className="chip" onClick={() => send(q.prompt, q.label)}>
+                {q.label}
+              </button>
+            ))}
+          </div>
+          <form
+            className="editbox-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(text, text.slice(0, 24));
+            }}
+          >
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="למשל: תחליף את הספה לספה ירוקה" aria-label="מה לשנות" />
+            <button type="submit" className="btn btn-dark btn-small" disabled={!text.trim()}>
+              שינוי
+            </button>
+          </form>
+        </>
+      )}
+      {shot.editError && <p className="error-inline">{shot.editError}</p>}
+      {(shot.versions?.length ?? 0) > 1 && (
+        <div className="versions" aria-label="גרסאות">
+          {shot.versions!.map((v, i) => (
+            <button key={v.url} type="button" className="chip" aria-pressed={shot.videoUrl === v.url} onClick={() => p.onPick(v.url)} disabled={p.busy}>
+              {i === 0 ? "מקור" : v.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
