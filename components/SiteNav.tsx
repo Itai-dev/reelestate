@@ -58,7 +58,7 @@ export default function SiteNav() {
       <div className="nav-inner">
         <div className="nav-links">
           {acct === null ? link("/login", "התחברות") : acct ? (
-            <Link href="/projects" className="nav-me" aria-current={path === "/projects" ? "page" : undefined}>
+            <Link href="/projects" className="nav-me" aria-label="הפרויקטים שלי">
               {acct.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={acct.avatar} alt="" referrerPolicy="no-referrer" />
@@ -68,7 +68,9 @@ export default function SiteNav() {
               הפרויקטים שלי
             </Link>
           ) : null}
-          {link("/studio", "סטודיו")}
+          <Link href="/projects" aria-current={path === "/projects" || path === "/studio" ? "page" : undefined}>
+            סטודיו
+          </Link>
           {link("/pricing", "מחירים")}
           {me?.user && link("/account", "חשבון")}
         </div>

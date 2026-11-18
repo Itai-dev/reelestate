@@ -39,10 +39,15 @@ export default function Projects() {
     return (
       <main className="page narrow">
         <header className="page-head">
-          <h1>הפרויקטים שלי</h1>
+          <h1>הסטודיו</h1>
           <p>מתחברים עם Google, וכל פרויקט נשמר בחשבון: התמונות, הקליפים, המותג והטקסטים. פותחים אותו מכל מכשיר.</p>
         </header>
-        <GoogleButton next="/projects" />
+        <div className="row-actions">
+          <GoogleButton next="/projects" />
+          <Link className="link" href="/studio">
+            להמשיך בלי חשבון
+          </Link>
+        </div>
       </main>
     );
 
@@ -51,7 +56,7 @@ export default function Projects() {
     <main className="page">
       <header className="page-head projects-head">
         <div>
-          <h1>הפרויקטים שלי</h1>
+          <h1>הסטודיו</h1>
           <p>
             מחובר בתור {name}.{" "}
             <button
@@ -82,6 +87,13 @@ export default function Projects() {
         </div>
       ) : (
         <div className="projects">
+          <Link href="/studio?new=1" className="project project-new">
+            <span className="project-cover">
+              <IconPlus />
+            </span>
+            <b>פרויקט חדש</b>
+            <small>מתמונות או מתוכנית</small>
+          </Link>
           {items.map((p) => {
             const shots = ((p.data as { shots?: unknown[] }).shots ?? []).length;
             return (

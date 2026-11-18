@@ -193,7 +193,17 @@ export const MODELS: Record<
 export const modelKeyOf = (family: Family, resolution: Resolution) =>
   `${family}${resolution === "720p" ? "720" : "1080"}` as ModelKey;
 
-export const DEFAULT_MODEL: ModelKey = "seedance720";
+export const DEFAULT_MODEL: ModelKey = "wan720";
+
+// What customers choose: a level of quality, never a model name.
+export type Quality = "standard" | "hd" | "premium";
+export const QUALITIES: Record<Quality, { he: string; note: string; model: ModelKey }> = {
+  standard: { he: "רגיל", note: "720p. לרילס, לסטורי ולמודעות. הכי מהיר.", model: "wan720" },
+  hd: { he: "HD", note: "1080p. לאתר, ליוטיוב ולמסכים גדולים.", model: "wan1080" },
+  premium: { he: "פרימיום", note: "הריאליזם הכי גבוה, לנכסי יוקרה ולשוט הפתיחה. לוקח כמה דקות.", model: "seedance720" },
+};
+export const qualityOf = (m: ModelKey): Quality =>
+  (Object.keys(QUALITIES) as Quality[]).find((q) => QUALITIES[q].model === m) ?? (m.startsWith("seedance") ? "premium" : m.endsWith("1080") ? "hd" : "standard");
 
 // Chat edits of a finished clip (video-to-video). The clip keeps its motion; only what the
 // sentence asks for changes.

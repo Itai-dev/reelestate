@@ -131,7 +131,7 @@ export default function BrandPanel(p: Props) {
           <label className="toggle">
             <span>
               <b>וידאו בשפת הצילום של המותג</b>
-              <small>האור, הצבע והאווירה נכנסים להנחיה של מודל הווידאו</small>
+              <small>האור, הצבע והאווירה נכנסים לווידאו</small>
             </span>
             <input type="checkbox" role="switch" checked={b.applyPrompt} onChange={(e) => p.onChange({ applyPrompt: e.target.checked })} />
           </label>

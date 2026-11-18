@@ -136,7 +136,7 @@ function Body(p: Props & { view: "video" | "frame"; setView: (v: "video" | "fram
         </label>
 
         <details className="prompt">
-          <summary>הפרומפט שנשלח למודל{shot.customPrompt ? " (נערך ידנית)" : ""}</summary>
+          <summary>ההנחיה המלאה (למתקדמים){shot.customPrompt ? " (נערך ידנית)" : ""}</summary>
           <textarea dir="ltr" rows={5} value={promptOf(shot, p.style)} onChange={(e) => p.onChange({ customPrompt: e.target.value })} />
           <div className="prompt-foot">
             <span>באנגלית עובד הכי טוב.</span>
@@ -152,7 +152,7 @@ function Body(p: Props & { view: "video" | "frame"; setView: (v: "video" | "fram
           {busy && <span className="spinner" aria-hidden />}
           <span>
             <b>{statusLine(shot, p.stale, p.live)}</b>
-            {shot.status === "rendering" && <small>לוקח בין דקה לחמש דקות, לפי המודל.</small>}
+            {shot.status === "rendering" && <small>לוקח בין דקה לחמש דקות, לפי האיכות.</small>}
             {shot.status === "error" && shot.error && <small>{shot.error}</small>}
             {p.stale && <small>הווידאו נוצר לפני השינוי האחרון.</small>}
           </span>

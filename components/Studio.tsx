@@ -7,7 +7,9 @@ import {
   EDITS,
   RENDERS,
   type RoomId,
-  FAMILIES,
+  QUALITIES,
+  qualityOf,
+  type Quality,
   MODELS,
   modelKeyOf,
   type Family,
@@ -710,7 +712,7 @@ export default function Studio() {
   const GEN_LINES = useMemo(
     () => [
       `יוצר וידאו ל-${busyCount} חללים`,
-      "המודל לומד את עומק החלל",
+      "לומד את עומק החלל",
       "מתכנן את תנועת המצלמה",
       "מרנדר אור וצללים",
       "שומר על קווים ישרים ועל הרהיטים במקום",
@@ -811,7 +813,7 @@ export default function Studio() {
           {picker}
           <div className="project-bar">
             <p className="project-name">
-              פרויקט: <b>{hydrated ? info.name || "ללא שם" : ""}</b>
+              <a href="/projects">כל הפרויקטים</a> / <b>{hydrated ? info.name || "ללא שם" : ""}</b>
             </p>
             <a className="new-project" href="/studio?new=1">
               <IconPlus /> פרויקט חדש
@@ -1208,31 +1210,18 @@ export default function Studio() {
 
                   {live && (
                     <div className="block">
-                      <h2>מודל וידאו</h2>
+                      <h2>איכות</h2>
                       <div className="field">
-                        <div className="seg">
-                          {(Object.keys(FAMILIES) as Family[]).map((f) => (
-                            <button
-                              key={f}
-                              type="button"
-                              aria-pressed={MODELS[settings.model].family === f}
-                              onClick={() => setSettings({ ...settings, model: modelKeyOf(f, MODELS[settings.model].resolution) })}
-                            >
-                              <b dir="ltr">{FAMILIES[f].name}</b>
-                              <small>{FAMILIES[f].note}</small>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="field">
-                        <span>רזולוציה</span>
-                        <div className="seg">
-                          {(["720p", "1080p"] as Resolution[]).map((r) => {
-                            const k = modelKeyOf(MODELS[settings.model].family, r);
+                        <div className="seg seg-quality">
+                          {(Object.keys(QUALITIES) as Quality[]).map((q) => {
+                            const k = QUALITIES[q].model;
                             return (
-                              <button key={r} type="button" aria-pressed={settings.model === k} onClick={() => setSettings({ ...settings, model: k })}>
-                                <b dir="ltr">{r}</b>
-                                <small>{accounts ? `${CREDITS_PER_CLIP[k]} קרדיטים לקליפ` : <span dir="ltr">${MODELS[k].pricePerClip.toFixed(2)} לקליפ</span>}</small>
+                              <button key={q} type="button" aria-pressed={qualityOf(settings.model) === q} onClick={() => setSettings({ ...settings, model: k })}>
+                                <b>{QUALITIES[q].he}</b>
+                                <small>{QUALITIES[q].note}</small>
+                                <small className="q-cost">
+                                  {accounts ? `${CREDITS_PER_CLIP[k]} קרדיטים לחלל` : <span dir="ltr">~${MODELS[k].pricePerClip.toFixed(2)} לחלל</span>}
+                                </small>
                               </button>
                             );
                           })}

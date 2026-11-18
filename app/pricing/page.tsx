@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CREDITS_PER_CLIP, CREDITS_PER_REEL, PACKS, PLANS, ils, type PackId, type PlanId } from "@/lib/plans";
-import { MODELS, type ModelKey } from "@/lib/presets";
+import { CREDITS_PER_CLIP, CREDITS_PER_EDIT, CREDITS_PER_RENDER, CREDITS_PER_REEL, PACKS, PLANS, ils, type PackId, type PlanId } from "@/lib/plans";
+import { QUALITIES, type Quality } from "@/lib/presets";
 import { authConfigured, currentUser, ensureProfile } from "@/lib/supabase";
 
 export const metadata: Metadata = { title: "מחירים — Reel Estate" };
@@ -77,25 +77,39 @@ export default async function PricingPage() {
       </section>
 
       <section className="credit-table" aria-labelledby="credits-title">
-        <h2 id="credits-title">כמה עולה כל קליפ</h2>
+        <h2 id="credits-title">מה עולה כמה</h2>
         <table>
           <thead>
             <tr>
-              <th scope="col">מודל</th>
-              <th scope="col">מתי לבחור בו</th>
-              <th scope="col">קרדיטים לקליפ של 5 שניות</th>
+              <th scope="col">איכות</th>
+              <th scope="col">מתי לבחור בה</th>
+              <th scope="col">קרדיטים לחלל (5 שניות)</th>
             </tr>
           </thead>
           <tbody>
-            {(Object.keys(MODELS) as ModelKey[]).map((k) => (
-              <tr key={k}>
-                <td dir="ltr" className="cell-start">
-                  {MODELS[k].name} <small>{MODELS[k].resolution}</small>
+            {(Object.keys(QUALITIES) as Quality[]).map((q) => (
+              <tr key={q}>
+                <td className="cell-start">
+                  <b>{QUALITIES[q].he}</b>
                 </td>
-                <td>{MODELS[k].note}</td>
-                <td>{CREDITS_PER_CLIP[k]}</td>
+                <td>{QUALITIES[q].note}</td>
+                <td>{CREDITS_PER_CLIP[QUALITIES[q].model]}</td>
               </tr>
             ))}
+            <tr>
+              <td className="cell-start">
+                <b>שינוי בקליפ</b>
+              </td>
+              <td>שינוי אחד בשורת &quot;מה לשנות?&quot;, למשל שקיעה או ריהוט</td>
+              <td>{CREDITS_PER_EDIT.edit720}</td>
+            </tr>
+            <tr>
+              <td className="cell-start">
+                <b>הדמיה מתוכנית</b>
+              </td>
+              <td>תמונה של חלל לנכס שעוד אין לו צילומים</td>
+              <td>{CREDITS_PER_RENDER}</td>
+            </tr>
           </tbody>
         </table>
         <p className="fine">קליפ שנכשל לא יורד מהיתרה: הקרדיטים חוזרים אוטומטית.</p>

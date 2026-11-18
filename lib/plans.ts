@@ -15,14 +15,14 @@ export const PLANS: Record<
     price: 349,
     credits: 90,
     who: "לסוכן שמשווק כמה נכסים בחודש",
-    perks: ["90 קרדיטים בחודש", "כל הפורמטים: רילס, פיד, אתר", "לוגו, מחיר וטלפון על הסרטון"],
+    perks: ["90 קרדיטים בחודש", "כל הפורמטים: רילס, פיד, אתר", "מיתוג מלינק ושינויים בשורה אחת"],
   },
   pro: {
     name: "משרד",
     price: 790,
     credits: 210,
     who: "למשרד תיווך עם כמה סוכנים",
-    perks: ["210 קרדיטים בחודש", "כל מה שבמסלול סוכן", "1080p לאתר ולמסכים גדולים"],
+    perks: ["210 קרדיטים בחודש", "כל מה שבמסלול סוכן", "הדמיות מתוכנית לנכסים שעוד לא נבנו"],
     featured: true,
   },
   studio: {
@@ -53,8 +53,8 @@ export const CREDITS_PER_EDIT: Record<EditKey, number> = { edit720: 1, edit1080:
 // Credits charged for one interior render.
 export const CREDITS_PER_RENDER = 1;
 
-// A typical reel: about 6 spaces in Seedance 2.5 at 720p.
-export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.seedance720;
+// A typical reel: about 6 spaces at standard quality.
+export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.wan720;
 
 export const PERIOD_DAYS = 31;
 
