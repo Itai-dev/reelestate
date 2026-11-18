@@ -68,11 +68,11 @@ export default function SiteNav() {
               הפרויקטים שלי
             </Link>
           ) : null}
-          {link("/", "סטודיו")}
+          {link("/studio", "סטודיו")}
           {link("/pricing", "מחירים")}
           {me?.user && link("/account", "חשבון")}
         </div>
-        <Link href="/" className="nav-brand" aria-label="Reel Estate, לסטודיו">
+        <Link href="/" className="nav-brand" aria-label="Reel Estate, לעמוד הבית">
           <Logo size={26} />
         </Link>
         <div className="nav-account">

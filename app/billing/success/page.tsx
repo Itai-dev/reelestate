@@ -31,7 +31,7 @@ function Waiting() {
       <>
         <h1>התשלום התקבל</h1>
         <p>{pay.credits} קרדיטים נוספו לחשבון. קבלה תישלח אליכם במייל מ-Grow.</p>
-        <Link className="btn btn-primary" href="/">
+        <Link className="btn btn-primary" href="/studio">
           לסטודיו
         </Link>
       </>

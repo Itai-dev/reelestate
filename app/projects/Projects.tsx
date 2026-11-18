@@ -66,7 +66,7 @@ export default function Projects() {
             </button>
           </p>
         </div>
-        <Link className="btn btn-primary" href="/?new=1">
+        <Link className="btn btn-primary" href="/studio?new=1">
           <IconPlus /> פרויקט חדש
         </Link>
       </header>
@@ -76,7 +76,7 @@ export default function Projects() {
       ) : items.length === 0 ? (
         <div className="block empty-block">
           <p>עוד אין פרויקטים שמורים. פרויקט שתפתחו בסטודיו יישמר כאן אוטומטית.</p>
-          <Link className="btn btn-outline" href="/">
+          <Link className="btn btn-outline" href="/studio">
             לסטודיו
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default function Projects() {
             const shots = ((p.data as { shots?: unknown[] }).shots ?? []).length;
             return (
               <article key={p.id} className="project">
-                <Link href={`/?p=${p.id}`} className="project-open">
+                <Link href={`/studio?p=${p.id}`} className="project-open">
                   <span className="project-cover">
                     {p.cover_path && covers[p.cover_path] ? (
                       // eslint-disable-next-line @next/next/no-img-element

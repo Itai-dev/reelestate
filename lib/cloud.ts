@@ -15,7 +15,7 @@ export async function getUser(): Promise<User | null> {
   return data.session?.user ?? null;
 }
 
-export function signInWithGoogle(next = "/") {
+export function signInWithGoogle(next = "/studio") {
   return sb().auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}` },

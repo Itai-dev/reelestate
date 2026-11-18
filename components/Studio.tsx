@@ -153,7 +153,7 @@ export default function Studio() {
       if (q.has("new") || (want && want !== id)) {
         await clearLocal();
         id = want || crypto.randomUUID();
-        history.replaceState(null, "", "/");
+        history.replaceState(null, "", "/studio");
       }
       if (!id) id = crypto.randomUUID();
       pid.current = id;
@@ -474,7 +474,7 @@ export default function Studio() {
       if (code === "auth")
         setNotice(
           <>
-            צריך להתחבר כדי ליצור וידאו. <Link href="/login?next=/">התחברות</Link>
+            צריך להתחבר כדי ליצור וידאו. <Link href="/login?next=/studio">התחברות</Link>
           </>,
         );
       update(id, { status: code === "no_credits" || code === "auth" ? "idle" : "error", error: e instanceof Error ? e.message : "היצירה נכשלה" });
@@ -745,7 +745,7 @@ export default function Studio() {
     );
   } else if (accounts && !signedIn) {
     primary = (
-      <Link className="btn btn-primary" href="/login?next=/">
+      <Link className="btn btn-primary" href="/login?next=/studio">
         התחברות כדי ליצור וידאו
       </Link>
     );
@@ -813,7 +813,7 @@ export default function Studio() {
             <p className="project-name">
               פרויקט: <b>{hydrated ? info.name || "ללא שם" : ""}</b>
             </p>
-            <a className="new-project" href="/?new=1">
+            <a className="new-project" href="/studio?new=1">
               <IconPlus /> פרויקט חדש
             </a>
           </div>
@@ -1355,7 +1355,7 @@ function SaveState({ cloud, user }: { cloud: "off" | "saving" | "saved" | "error
   );
 }
 
-export function GoogleButton({ small, next = "/" }: { small?: boolean; next?: string }) {
+export function GoogleButton({ small, next = "/studio" }: { small?: boolean; next?: string }) {
   const [busy, setBusy] = useState(false);
   return (
     <button

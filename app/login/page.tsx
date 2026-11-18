@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "התחברות — Reel Estate" };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const sp = await searchParams;
-  const next = sp.next && sp.next.startsWith("/") && !sp.next.startsWith("//") ? sp.next : "/";
+  const next = sp.next && sp.next.startsWith("/") && !sp.next.startsWith("//") ? sp.next : "/studio";
   return (
     <main className="page narrow">
       <header className="page-head">
