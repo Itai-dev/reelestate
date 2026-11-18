@@ -4154,3 +4154,10 @@ h2,
   height: 18px;
   color: var(--mute);
 }
+
+@media (max-width: 759px) {
+  .nav-me {
+    padding: 2px !important;
+    gap: 0;
+  }
+}
