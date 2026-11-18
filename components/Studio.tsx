@@ -36,7 +36,7 @@ import ShotSheet from "./ShotSheet";
 import BrandSheet from "./BrandSheet";
 import Sheet from "./Sheet";
 import PlayerSheet from "./PlayerSheet";
-import { IconChevron, IconChip, IconDetails, IconFrame, IconLink, IconPlay, IconPlus, IconSliders, IconSpark } from "./Icons";
+import { IconChevron, IconChip, IconDetails, IconFrame, IconPlay, IconPlus, IconSliders, IconSpark } from "./Icons";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
@@ -417,23 +417,6 @@ export default function Studio() {
     <div className="app">
       <header className="hero">
         <h1>מתמונות של נכס לסרטון בשפה של המותג</h1>
-        <button type="button" className="brandbar" onClick={() => setPanel("brand")}>
-          <span className="brandbar-icon" style={brand ? { background: brand.colors.primary } : undefined}>
-            {brand && logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo.url} alt="" />
-            ) : (
-              <IconLink />
-            )}
-          </span>
-          <span className="brandbar-text">
-            <b>{brand ? brand.name : "המותג שלכם"}</b>
-            <small>{brand ? [brand.host, ...brand.vibe.slice(0, 3)].join(" · ") : "מדביקים קישור לאתר ומקבלים לוגו, צבעים, פונטים ושפת צילום"}</small>
-          </span>
-          <span className="brandbar-go">
-            <IconSpark />
-          </span>
-        </button>
         <FormatTabs value={settings.aspect} onChange={(aspect) => setSettings({ ...settings, aspect })} />
       </header>
 
@@ -471,6 +454,38 @@ export default function Studio() {
 
       <main className="layout">
         <section className="col-shots" aria-labelledby="shots-title">
+          <button type="button" className="assist" onClick={() => setPanel("brand")}>
+            {brand ? (
+              <span className="assist-logo" style={{ background: brand.colors.primary }}>
+                {logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logo.url} alt="" />
+                ) : (
+                  <IconSpark className="assist-star" />
+                )}
+              </span>
+            ) : (
+              <IconSpark className="assist-star" />
+            )}
+            <span className="assist-text">
+              <b>{brand ? brand.name : "סרטון בשפה של המותג"}</b>
+              <small>
+                {brand
+                  ? brand.tone || brand.host
+                  : "מדביקים קישור לאתר החברה. הלוגו, הצבעים, הפונטים ושפת הצילום נכנסים לסרטון."}
+              </small>
+              {brand && (
+                <span className="assist-dots" aria-hidden>
+                  {brand.colors.palette.slice(0, 5).map((c) => (
+                    <i key={c} style={{ background: c }} />
+                  ))}
+                </span>
+              )}
+            </span>
+            <span className="pill-btn">
+              {brand ? "עריכת המותג" : "הדבקת לינק"} <IconChevron />
+            </span>
+          </button>
           {shots.length === 0 ? (
             <label className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps}>
               {picker}
@@ -519,14 +534,19 @@ export default function Studio() {
         </section>
 
         <aside className="col-side">
-          <section className="sum" aria-label="הרילס">
+          <section
+            className="sum"
+            aria-label="הרילס"
+            style={shots[0] && media[shots[0].id] ? ({ "--photo": `url(${media[shots[0].id].img})` } as React.CSSProperties) : undefined}
+          >
             {shots.length > 0 ? (
               <p className="sum-head">
-                <b>{shots.length} חללים</b> · כ-{totalSeconds} שניות
+                <b>תיק הרילס</b>
+                <span>{shots.length} חללים · כ-{totalSeconds} שנ׳</span>
               </p>
             ) : (
               <p className="sum-head">
-                <b>הרילס שלכם</b>
+                <b>תיק הרילס</b>
               </p>
             )}
             <p className="sum-sub">

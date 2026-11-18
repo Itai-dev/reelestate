@@ -55,6 +55,7 @@ export default function SiteNav() {
         <div className="nav-links">
           {link("/", "סטודיו")}
           {link("/pricing", "מחירים")}
+          {me?.user && link("/account", "חשבון")}
         </div>
         <div className="nav-account">
           {me?.accounts &&
