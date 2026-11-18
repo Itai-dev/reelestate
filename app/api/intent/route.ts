@@ -1,6 +1,6 @@
 import { access } from "@/lib/access";
 import { askJson } from "@/lib/llm";
-import { mode } from "@/lib/server";
+import { errorMessage, mode } from "@/lib/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +30,6 @@ export async function POST(req: Request) {
     return Response.json({ actions: Array.isArray(r.actions) ? r.actions.slice(0, 20) : [], reply: String(r.reply ?? "").slice(0, 300) });
   } catch (e) {
     console.error("intent", e);
-    return Response.json({ error: "לא הצלחתי להבין את הבקשה. נסו לנסח אחרת." }, { status: 502 });
+    return Response.json({ error: "לא הצלחתי להבין את הבקשה. נסו לנסח אחרת.", detail: errorMessage(e) }, { status: 502 });
   }
 }

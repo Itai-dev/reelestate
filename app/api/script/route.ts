@@ -1,6 +1,6 @@
 import { access } from "@/lib/access";
 import { askJson } from "@/lib/llm";
-import { mode } from "@/lib/server";
+import { errorMessage, mode } from "@/lib/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,6 +44,6 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     console.error("script", e);
-    return Response.json({ error: "לא הצלחנו לכתוב טקסטים. נסו שוב." }, { status: 502 });
+    return Response.json({ error: "לא הצלחנו לכתוב טקסטים. נסו שוב.", detail: errorMessage(e) }, { status: 502 });
   }
 }
