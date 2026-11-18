@@ -811,7 +811,7 @@ export default function Studio() {
           {picker}
           <div className="project-bar">
             <p className="project-name">
-              פרויקט: <b>{info.name || "ללא שם"}</b>
+              פרויקט: <b>{hydrated ? info.name || "ללא שם" : ""}</b>
             </p>
             <a className="new-project" href="/?new=1">
               <IconPlus /> פרויקט חדש
