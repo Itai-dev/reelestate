@@ -806,9 +806,17 @@ export default function Studio() {
         </div>
       )}
 
-      <main className="layout">
+      <main className={`layout${shots.length ? "" : " is-empty"}`}>
         <div className="col-main">
           {picker}
+          <div className="project-bar">
+            <p className="project-name">
+              פרויקט: <b>{info.name || "ללא שם"}</b>
+            </p>
+            <a className="new-project" href="/?new=1">
+              <IconPlus /> פרויקט חדש
+            </a>
+          </div>
           <nav className="progress-head" aria-label="שלבים">
             <div className="progress-top">
               {stepIndex > 0 ? (
@@ -850,21 +858,26 @@ export default function Studio() {
                 <p>כל תמונה הופכת לקליפ של חלל אחד. לוחצים על תמונה כדי לבחור חלל, תנועת מצלמה ואור.</p>
               </header>
               {shots.length === 0 ? (
-                <div className="start-choice">
+                <div className="start">
                   <div className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps} onClick={() => fileInput.current?.click()} role="button" tabIndex={0}>
                     <span className="drop-art" aria-hidden>
                       <i />
                       <i />
                       <i />
                     </span>
-                    <span className="drop-title">יש לי תמונות</span>
-                    <span className="drop-sub">גוררים לכאן או בוחרים מהמכשיר. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
+                    <span className="drop-title">גררו לכאן תמונות של הנכס</span>
+                    <span className="drop-sub">או לחצו כדי לבחור מהמכשיר. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
                   </div>
-                  <button type="button" className="choice-alt" onClick={() => setRenderOpen(true)} disabled={!live || locked}>
-                    <IconSpark />
-                    <b>עוד אין לי תמונות</b>
-                    <small>מעלים תוכנית, רפרנסים ומשפט על הנכס, ונוצרות הדמיות לכל חלל.</small>
-                  </button>
+                  {live && !locked && (
+                    <button type="button" className="start-alt" onClick={() => setRenderOpen(true)}>
+                      <IconSpark />
+                      <span>
+                        <b>עוד אין תמונות?</b>
+                        <small>מעלים תוכנית ורפרנסים, ונוצרות הדמיות לכל חלל</small>
+                      </span>
+                      <IconChevron className="row-go" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1233,14 +1246,14 @@ export default function Studio() {
           )}
         </div>
 
-        <aside className="col-side">
+        {shots.length > 0 && <aside className="col-side">
           <section
             className="sum"
             aria-label="הרילס"
             style={shots[0] && media[shots[0].id] ? ({ "--photo": `url(${media[shots[0].id].img})` } as React.CSSProperties) : undefined}
           >
             <p className="sum-head">
-              <b>{info.name || "פרויקט חדש"}</b>
+              <b>{info.name || "הרילס"}</b>
             </p>
             <p className="sum-sub">{shots.length ? `${shots.length} חללים, כ-${totalSeconds} שניות, ${ASPECTS[settings.aspect].hint}` : "מתחילים מתמונות של הנכס"}</p>
             <SaveState cloud={cloud} user={user} />
@@ -1262,7 +1275,7 @@ export default function Studio() {
               )}
             </div>
           </section>
-        </aside>
+        </aside>}
       </main>
 
       <div className="bar">

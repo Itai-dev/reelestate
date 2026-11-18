@@ -15,8 +15,8 @@
   --iris-deep: #000000;
   --error: #c13515;
   --ok: #0f7a4d;
-  --ui: "Assistant", "Heebo", "Arial Hebrew", system-ui, sans-serif;
-  --serif: "Cormorant Garamond", "Heebo", "Assistant", sans-serif;
+  --ui: "Heebo", "Arial Hebrew", system-ui, sans-serif;
+  --serif: "Heebo", "Arial Hebrew", system-ui, sans-serif;
   --r: 26px;
   --r-lg: 30px;
   --shadow: 0 6px 20px rgba(20, 20, 40, 0.1);
@@ -4013,4 +4013,144 @@ h2,
   width: auto;
   height: auto;
   fill: none;
+}
+
+
+/* ---------- one family everywhere; fixes from QA ---------- */
+.plan-price b,
+.big-number,
+.poster-text b,
+.project b,
+.choice-alt b {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.nav-me {
+  padding: 3px !important;
+  padding-inline-end: 14px !important;
+  gap: 9px;
+}
+
+.nav-me img,
+.nav-me span {
+  width: 28px;
+  height: 28px;
+}
+
+.site-foot .foot-logo .logo-word {
+  font-family: "Space Grotesk", "Heebo", sans-serif !important;
+  font-weight: 700;
+  letter-spacing: -0.035em !important;
+  text-transform: none !important;
+  color: var(--ink);
+}
+
+.site-foot .foot-logo {
+  margin-inline-end: auto;
+}
+
+/* project bar: the project first, then its steps */
+.project-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.project-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mute);
+  letter-spacing: 0;
+}
+
+.project-name b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.new-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: var(--ivory);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.2s;
+}
+
+.new-project:hover {
+  border-color: var(--ink);
+}
+
+.new-project .ico {
+  width: 18px;
+  height: 18px;
+}
+
+.layout.is-empty {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.start {
+  display: grid;
+  gap: 14px;
+}
+
+.start-alt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--hair);
+  border-radius: 18px;
+  background: transparent;
+  text-align: start;
+  color: var(--ink);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.start-alt:hover {
+  background: var(--ivory);
+  border-color: #cdc5b5;
+}
+
+.start-alt > .ico:first-child {
+  width: 26px;
+  height: 26px;
+  color: var(--copper);
+  fill: var(--copper);
+  stroke-width: 0;
+}
+
+.start-alt span {
+  display: grid;
+  flex: 1;
+}
+
+.start-alt b {
+  font-weight: 600;
+}
+
+.start-alt small {
+  color: var(--mute);
+  font-size: 14px;
+}
+
+.start-alt .row-go {
+  width: 18px;
+  height: 18px;
+  color: var(--mute);
 }
