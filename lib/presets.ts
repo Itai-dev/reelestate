@@ -195,6 +195,18 @@ export const modelKeyOf = (family: Family, resolution: Resolution) =>
 
 export const DEFAULT_MODEL: ModelKey = "seedance720";
 
+// Chat edits of a finished clip (video-to-video). The clip keeps its motion; only what the
+// sentence asks for changes.
+export type EditKey = "edit720" | "edit1080";
+export const EDITS: Record<EditKey, { endpoint: string; resolution: Resolution; name: string; pricePerClip: number }> = {
+  edit720: { endpoint: "google/gemini-omni-flash/v1.2/edit", resolution: "720p", name: "Gemini Omni Flash", pricePerClip: 0.45 },
+  edit1080: { endpoint: "google/gemini-omni-flash/v1.2/edit", resolution: "1080p", name: "Gemini Omni Flash", pricePerClip: 0.65 },
+};
+
+// Added to every edit so the property itself is never misrepresented.
+export const EDIT_GUARD =
+  "Keep the architecture, walls, floors, windows, the view outside, the room size and the camera motion exactly as they are.";
+
 export const CLIP_SECONDS = 5;
 
 export type Pace = "calm" | "brisk";

@@ -1,5 +1,5 @@
-import { errorMessage, fal, isModelKey, mode } from "@/lib/server";
-import { MODELS } from "@/lib/presets";
+import { errorMessage, fal, isJobKey, jobEndpoint, mode } from "@/lib/server";
+import type { EditKey, ModelKey } from "@/lib/presets";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const model = url.searchParams.get("model");
   const id = url.searchParams.get("id");
-  if (!isModelKey(model) || !id) return Response.json({ error: "בקשה חסרה" }, { status: 400 });
+  if (!isJobKey(model) || !id) return Response.json({ error: "בקשה חסרה" }, { status: 400 });
 
   // With accounts on, a user can only follow their own jobs.
   let gen: Gen | null = null;
@@ -51,8 +51,8 @@ export async function GET(req: Request) {
   return Response.json(out);
 }
 
-async function falStatus(model: keyof typeof MODELS, id: string): Promise<Out> {
-  const endpoint = MODELS[model].endpoint;
+async function falStatus(model: ModelKey | EditKey, id: string): Promise<Out> {
+  const endpoint = jobEndpoint(model);
   try {
     const st = await fal().queue.status(endpoint, { requestId: id, logs: false });
     if (st.status === "IN_QUEUE") return { status: "queued", position: st.queue_position };

@@ -1,5 +1,5 @@
 import { createFalClient } from "@fal-ai/client";
-import { MODELS, NEGATIVE_PROMPT, type ModelKey } from "./presets";
+import { EDITS, MODELS, NEGATIVE_PROMPT, type EditKey, type ModelKey } from "./presets";
 
 export type Mode = "live" | "demo" | "mock";
 
@@ -26,6 +26,25 @@ export function guard(req: Request): Response | null {
 
 export function isModelKey(v: unknown): v is ModelKey {
   return typeof v === "string" && v in MODELS;
+}
+
+export function isEditKey(v: unknown): v is EditKey {
+  return typeof v === "string" && v in EDITS;
+}
+
+export const isJobKey = (v: unknown): v is ModelKey | EditKey => isModelKey(v) || isEditKey(v);
+export const jobEndpoint = (k: ModelKey | EditKey) => (isEditKey(k) ? EDITS[k].endpoint : MODELS[k].endpoint);
+
+// Edits only take clips that already live on fal's storage, so the key can't be used
+// to process arbitrary videos from the web.
+export function isFalMediaUrl(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" && (u.hostname === "fal.media" || u.hostname.endsWith(".fal.media"));
+  } catch {
+    return false;
+  }
 }
 
 // Each model names its inputs a little differently. Both get a frame that is

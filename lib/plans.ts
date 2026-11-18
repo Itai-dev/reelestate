@@ -1,6 +1,6 @@
 // What we sell. Change prices and credit amounts here; the pricing page,
 // checkout and billing all read from this file.
-import type { ModelKey } from "./presets";
+import type { EditKey, ModelKey } from "./presets";
 
 export type PlanId = "starter" | "pro" | "studio";
 export type PackId = "pack30" | "pack100";
@@ -46,6 +46,9 @@ export const CREDITS_PER_CLIP: Record<ModelKey, number> = {
   wan720: 1,
   wan1080: 2,
 };
+
+// Credits charged for one chat edit of a 5-second clip.
+export const CREDITS_PER_EDIT: Record<EditKey, number> = { edit720: 1, edit1080: 2 };
 
 // A typical reel: about 6 spaces in Seedance 2.5 at 720p.
 export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.seedance720;
