@@ -9,7 +9,7 @@ export function LogoMark({ size = 28 }: { size?: number }) {
         </mask>
         <mask id="re-play">
           <rect width="24" height="24" fill="#fff" />
-          <path d="M8.1 12.4v5.2l4.3-2.6z" fill="#000" stroke="#000" strokeWidth="1.7" strokeLinejoin="round" />
+          <path d="M7.2 12.3v5.4l4.1-2.7z" fill="#000" stroke="#000" strokeWidth="1.7" strokeLinejoin="round" />
         </mask>
       </defs>
       <rect x="8.8" y="1" width="12.6" height="17" rx="2.2" fill="currentColor" mask="url(#re-mark)" />
