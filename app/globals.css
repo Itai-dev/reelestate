@@ -4336,3 +4336,61 @@ h2,
     width: min(100%, 340px);
   }
 }
+
+.land-show {
+  margin-bottom: 72px;
+}
+
+.land-show h2 {
+  font-size: clamp(26px, 3.6vw, 38px);
+  margin-bottom: 22px;
+  letter-spacing: -0.02em;
+}
+
+.land-reels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.land-reel {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 22px;
+  background: var(--soft);
+  display: block;
+}
+
+.land-plan {
+  width: 210px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.15);
+  flex: none;
+}
+
+@media (max-width: 759px) {
+  .land-reels {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin: 0 -16px;
+    padding: 0 16px 6px;
+  }
+  .land-reel {
+    width: 62vw;
+    flex: none;
+    scroll-snap-align: start;
+  }
+  .land-renders {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .land-plan {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+  }
+}

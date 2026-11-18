@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LogoMark } from "@/components/Logo";
+import LoopVideo from "@/components/LoopVideo";
 
 export const metadata: Metadata = {
   title: "Reel Estate — מתמונות של נכס לרילס ממותג",
@@ -12,6 +12,21 @@ const STEPS = [
   { t: "מדביקים לינק לאתר", d: "הלוגו, הצבעים, הפונטים ושפת הצילום של המותג נכנסים לסרטון לבד." },
   { t: "מקבלים רילס", d: "תנועת מצלמה לכל חלל, טקסטים שנכתבים לבד, וכרטיס סיום עם קריאה לפעולה." },
 ];
+
+const clip = (ts: string, id: string) => `/showcase/hf_${ts}_${id}.mp4`;
+
+const SHOWCASE = [
+  clip("20261118_212948", "5ffe1c82-7d18-41c9-978f-200e0fe6c4c5"),
+  clip("20261118_211435", "1c76d183-e39d-4000-80e8-ce7d26a5baa7"),
+  clip("20261118_195406", "42b33b3a-74fc-4592-94ec-e77978c79e7f"),
+  clip("20261118_192217", "1ebd669c-e45b-46e3-8a56-c5e0c36353a6"),
+  clip("20261118_152916", "2fe97cfa-03e2-4a64-9303-aa9272b35ff1"),
+  clip("20261118_140402", "daa9986e-37b9-490d-b12b-3093a4b7f5e4"),
+  clip("20261118_184546", "1b19ac0d-116e-4e31-b2b8-c7ab0eccc074"),
+  clip("20261118_214028", "87424936-b72f-41d4-ba21-4e14e9903ba0"),
+];
+
+const PLAN_CLIP = clip("20261118_214750", "618860f1-3ab7-464e-abe1-31ea7e2a3fc4");
 
 const FEATURES = [
   { t: "שינויים בשורה אחת", d: "\"שקיעה במטבח, והמחיר 4.8 מיליון\". בכתב או בקול, וכל שינוי ניתן לביטול." },
@@ -44,6 +59,15 @@ export default function Landing() {
         <p className="fine">איך זה עובד, בחצי דקה</p>
       </section>
 
+      <section className="land-show" aria-labelledby="show-title">
+        <h2 id="show-title">ככה זה נראה</h2>
+        <div className="land-reels">
+          {SHOWCASE.map((src) => (
+            <LoopVideo key={src} src={src} className="land-reel" />
+          ))}
+        </div>
+      </section>
+
       <section className="land-steps" aria-labelledby="steps-title">
         <h2 id="steps-title">שלושה צעדים</h2>
         <ol>
@@ -68,7 +92,7 @@ export default function Landing() {
             מנסים עם תוכנית
           </Link>
         </div>
-        <LogoMark size={120} />
+        <LoopVideo src={PLAN_CLIP} className="land-plan" />
       </section>
 
       <section className="land-features">
