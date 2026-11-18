@@ -16,7 +16,7 @@
   --error: #c13515;
   --ok: #0f7a4d;
   --ui: "Assistant", "Heebo", "Arial Hebrew", system-ui, sans-serif;
-  --serif: "Frank Ruhl Libre", "David", Georgia, serif;
+  --serif: "Cormorant Garamond", "Heebo", "Assistant", sans-serif;
   --r: 26px;
   --r-lg: 30px;
   --shadow: 0 6px 20px rgba(20, 20, 40, 0.1);
@@ -2589,4 +2589,22 @@ textarea {
 }
 .nav-links {
   justify-self: center;
+}
+
+/* Hebrew headings fall through to Heebo (Latin keeps the serif) */
+h1,
+h2,
+.sh-head h2,
+.sum-head b,
+.drop-title,
+.card-text b,
+.plan h2,
+.assist-text b,
+.kit-font {
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.nav-brand,
+.site-foot span {
+  font-weight: 600;
 }
