@@ -4,8 +4,10 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { SB_ANON, SB_URL } from "./sb-public";
+
+const URL = SB_URL;
+const ANON = SB_ANON;
 
 // Accounts switch on only when the server can also write (service role key).
 export const authConfigured = () => Boolean(URL && ANON && process.env.SUPABASE_SERVICE_ROLE_KEY);

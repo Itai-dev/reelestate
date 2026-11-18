@@ -1,10 +1,11 @@
 // Keeps the Supabase session cookie fresh on every page load.
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SB_ANON, SB_URL } from "./lib/sb-public";
 
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = SB_URL;
+  const key = SB_ANON;
   let response = NextResponse.next({ request });
   if (!url || !key) return response;
 

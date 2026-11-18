@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import { SB_ANON, SB_URL } from "@/lib/sb-public";
 
 export default function LoginForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
@@ -10,15 +11,8 @@ export default function LoginForm({ next }: { next: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) {
-      setError("ההתחברות עוד לא מוגדרת בשרת.");
-      setState("error");
-      return;
-    }
     setState("sending");
-    const sb = createBrowserClient(url, key);
+    const sb = createBrowserClient(SB_URL, SB_ANON);
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
