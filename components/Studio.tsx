@@ -153,7 +153,13 @@ export default function Studio() {
       }
       if (!id) id = crypto.randomUUID();
       pid.current = id;
+      const prev = await load<string>("projectId");
       await save("projectId", id);
+      if (prev !== id && typeof BroadcastChannel !== "undefined") {
+        const ch = new BroadcastChannel("reel-estate");
+        ch.postMessage({ type: "project", id });
+        ch.close();
+      }
 
       const u = await getUser().catch(() => null);
       setUser(u);
@@ -218,7 +224,9 @@ export default function Studio() {
   useEffect(() => {
     if (!hydrated) return;
     latest.current = { shots, info, settings, musicName: music?.name, brand, savedAt: Date.now(), files: files.current };
-    const id = setTimeout(() => save("project", latest.current), 400);
+    const id = setTimeout(async () => {
+      if ((await load<string>("projectId")) === pid.current) save("project", latest.current);
+    }, 400);
     return () => clearTimeout(id);
   }, [hydrated, shots, info, settings, music, brand]);
   useEffect(() => {
@@ -302,15 +310,30 @@ export default function Studio() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  const hadShots = useRef(false);
+  if (shots.length) hadShots.current = true;
+
+  // Another tab switched projects: this tab's copy is stale, so reload it.
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const ch = new BroadcastChannel("reel-estate");
+    ch.onmessage = (e) => {
+      if (e.data?.type === "project" && e.data.id !== pid.current) location.reload();
+    };
+    return () => ch.close();
+  }, []);
+
   const syncing = useRef(false);
   const syncAgain = useRef(false);
   useEffect(() => {
     if (!hydrated || !user) return;
+    if (!shots.length && !hadShots.current) return;
     const run = async () => {
       if (syncing.current) {
         syncAgain.current = true;
         return;
       }
+      if ((await load<string>("projectId")) !== pid.current) return;
       syncing.current = true;
       setCloud("saving");
       try {
