@@ -3415,3 +3415,36 @@ h2,
 .bar {
   position: fixed;
 }
+
+/* the reel always fits the screen, whatever its format */
+.sheet {
+  height: 100vh;
+  height: 100dvh;
+  inset: 0 0 auto 0;
+}
+
+.sheet-stage {
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  margin: 0 16px;
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.sheet-head {
+  padding: 10px 16px;
+}
+
+.sheet-controls {
+  padding-top: 10px;
+}
