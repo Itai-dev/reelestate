@@ -5799,7 +5799,7 @@ body:has(.land) .nav-links > *:nth-child(3) {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.012);
+    transform: scale(1.005);
   }
 }
 
