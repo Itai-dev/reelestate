@@ -85,7 +85,16 @@ export default function Landing() {
             מעלים תוכנית
           </Link>
         </div>
-        <LoopVideo src={PLAN_CLIP} className="land-plan" />
+        <div className="land-pair">
+          <figure>
+            <video className="land-plan" src={`${PLAN_CLIP}#t=0.1`} muted playsInline preload="metadata" aria-hidden />
+            <figcaption>ההדמיה</figcaption>
+          </figure>
+          <figure>
+            <LoopVideo src={PLAN_CLIP} className="land-plan" />
+            <figcaption>הסרטון</figcaption>
+          </figure>
+        </div>
       </section>
 
       <section className="land-features">

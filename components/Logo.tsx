@@ -6,8 +6,10 @@ export function LogoMark({ size = 34 }: { size?: number }) {
     <svg viewBox="4 0 16 24" width={(size * 2) / 3} height={size} aria-hidden className="logo-mark">
       <defs>
         <linearGradient id="re-warm" x1="7" y1="17" x2="17" y2="7" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#f7772a" />
-          <stop offset="0.55" stopColor="#fca945" />
+          <stop offset="0" stopColor="#6a5bd8" />
+          <stop offset="0.14" stopColor="#d62976" />
+          <stop offset="0.42" stopColor="#f7772a" />
+          <stop offset="0.7" stopColor="#fcaa47" />
           <stop offset="1" stopColor="#ffd96a" />
         </linearGradient>
       </defs>
