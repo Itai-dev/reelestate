@@ -5573,3 +5573,48 @@ details[open] > summary::after {
 .h1-swash {
   font-size: clamp(40px, 11vw, 132px);
 }
+
+/* handwritten offer: thin strokes, written letter by letter */
+.h1-hand {
+  display: block;
+  padding: 0.05em 0.15em 0.12em;
+  white-space: nowrap;
+  font-family: "Gveret Levin", "Heebo", sans-serif;
+  font-weight: 400;
+  font-size: clamp(42px, 11vw, 132px);
+  line-height: 1.05;
+  color: var(--copper);
+  /* eats into the marker stroke so the letters read like a fine pen */
+  -webkit-text-stroke: 0.028em var(--bg);
+  paint-order: normal;
+}
+
+.hw {
+  display: inline-block;
+  animation: hw 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes hw {
+  from {
+    opacity: 0;
+    clip-path: inset(-0.3em -0.3em -0.3em 100%);
+    transform: translateY(0.04em);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(-0.3em -0.3em -0.3em -0.3em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw {
+    animation: none;
+  }
+}
+
+/* wordmark in a geometric social-style sans */
+.logo-word {
+  font-family: "Outfit", "Space Grotesk", sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
