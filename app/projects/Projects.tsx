@@ -71,18 +71,15 @@ export default function Projects() {
             </button>
           </p>
         </div>
-        <Link className="btn btn-primary" href="/studio?new=1">
-          <IconPlus /> פרויקט חדש
-        </Link>
       </header>
       {error && <p className="error-inline">{error}</p>}
       {items === null ? (
         <Thinking lines={["טוען את הפרויקטים"]} />
       ) : items.length === 0 ? (
         <div className="block empty-block">
-          <p>עוד אין פרויקטים שמורים. פרויקט שתפתחו בסטודיו יישמר כאן אוטומטית.</p>
-          <Link className="btn btn-outline" href="/studio">
-            לסטודיו
+          <p>עוד אין פרויקטים. כל פרויקט שתפתחו יישמר כאן אוטומטית.</p>
+          <Link className="btn btn-primary" href="/studio?new=1">
+            <IconPlus /> פרויקט חדש
           </Link>
         </div>
       ) : (
