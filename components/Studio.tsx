@@ -44,7 +44,7 @@ import ShotCard from "./ShotCard";
 import ShotSheet from "./ShotSheet";
 import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
-import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconSofa, IconKitchen, IconBed } from "./Icons";
+import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
 import RenderSheet from "./RenderSheet";
@@ -864,16 +864,16 @@ export default function Studio() {
                   <div className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps} onClick={() => fileInput.current?.click()} role="button" tabIndex={0}>
                     <span className="drop-art" aria-hidden>
                       <i>
-                        <IconSofa />
-                        <em>סלון</em>
+                        <IconFacade />
+                        <em>חזית</em>
                       </i>
                       <i>
-                        <IconKitchen />
-                        <em>מטבח</em>
+                        <IconInterior />
+                        <em>פנים</em>
                       </i>
                       <i>
-                        <IconBed />
-                        <em>חדר שינה</em>
+                        <IconOutdoor />
+                        <em>חוץ</em>
                       </i>
                     </span>
                     <span className="drop-title">גררו לכאן תמונות של הנכס</span>

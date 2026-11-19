@@ -5088,3 +5088,26 @@ summary::-webkit-details-marker {
 details[open] > summary::after {
   transform: rotate(180deg);
 }
+
+.logo {
+  gap: 7px;
+}
+
+.logo-mark {
+  width: 34px;
+  height: 34px;
+  margin-block: -4px;
+}
+
+@media (max-width: 759px) {
+  .logo-mark {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.foot-logo .logo-mark {
+  width: 26px;
+  height: 26px;
+  margin-block: 0;
+}

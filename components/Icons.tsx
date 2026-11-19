@@ -105,24 +105,24 @@ export const IconFrame = ({ w, h }: { w: number; h: number }) => {
   );
 };
 
-export const IconSofa = (p: P) => (
+export const IconFacade = (p: P) => (
   <S {...p}>
-    <path d="M5 11V8.5A2.5 2.5 0 0 1 7.5 6h9A2.5 2.5 0 0 1 19 8.5V11" />
-    <path d="M3.5 12.5a1.5 1.5 0 0 1 3 0V14h11v-1.5a1.5 1.5 0 0 1 3 0V17a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z" />
-    <path d="M6 18v1.5M18 18v1.5" />
+    <path d="M5.5 20V5.5A1.5 1.5 0 0 1 7 4h10a1.5 1.5 0 0 1 1.5 1.5V20M3.5 20h17" />
+    <path d="M9 8h1M14 8h1M9 12h1M14 12h1M10.5 20v-3.5h3V20" />
   </S>
 );
 
-export const IconKitchen = (p: P) => (
+export const IconInterior = (p: P) => (
   <S {...p}>
-    <path d="M5 11h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
-    <path d="M3 11h18M7.5 11a4.5 4.5 0 0 1 9 0M12 6.5V5" />
+    <path d="M6.5 20V4h11v16M4 20h16" />
+    <path d="M6.5 4l5 1.8v15.7l-5-1.5z" />
+    <path d="M9.8 13v.5" />
   </S>
 );
 
-export const IconBed = (p: P) => (
+export const IconOutdoor = (p: P) => (
   <S {...p}>
-    <path d="M3.5 18.5V7M3.5 15h17v3.5M20.5 15v-2.5A2.5 2.5 0 0 0 18 10h-7v5" />
-    <circle cx="7.3" cy="11.6" r="1.6" />
+    <circle cx="12" cy="10" r="5" />
+    <path d="M12 15v5M5 20h14" />
   </S>
 );
