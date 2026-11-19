@@ -5618,3 +5618,25 @@ details[open] > summary::after {
   font-weight: 500;
   letter-spacing: -0.02em;
 }
+
+.logo-word-svg {
+  display: block;
+  height: 24px;
+  width: auto;
+  aspect-ratio: 218 / 42;
+  overflow: visible;
+}
+
+.foot-logo .logo-word-svg {
+  height: 18px;
+}
+
+@media (max-width: 759px) {
+  .logo-word-svg {
+    height: 20px;
+  }
+}
+
+.h1-hand {
+  color: var(--ink);
+}
