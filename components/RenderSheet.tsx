@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sheet from "./Sheet";
 import Thinking from "./Thinking";
 import { normalize } from "@/lib/image";
@@ -13,6 +13,7 @@ type Props = {
   aspect: string;
   costLine: string;
   onAdd: (blob: Blob, room: RoomId) => Promise<void>;
+  initialBrief?: string;
 };
 
 type Space = PlanSpace & { on: boolean; state?: "wait" | "work" | "done" | "error"; preview?: string };
@@ -24,6 +25,10 @@ export default function RenderSheet(p: Props) {
   const [plan, setPlan] = useState<File | null>(null);
   const [refs, setRefs] = useState<File[]>([]);
   const [brief, setBrief] = useState("");
+  useEffect(() => {
+    if (p.open && p.initialBrief && !brief) setBrief(p.initialBrief);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.open, p.initialBrief]);
   const [phase, setPhase] = useState<"input" | "reading" | "choose" | "rendering">("input");
   const [style, setStyle] = useState("");
   const [spaces, setSpaces] = useState<Space[]>([]);

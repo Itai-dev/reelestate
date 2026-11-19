@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LoopVideo from "@/components/LoopVideo";
-import PhoneDemo from "@/components/PhoneDemo";
+import HeroPrompt from "@/components/HeroPrompt";
 
 export const metadata: Metadata = {
   title: "Reel Estate — מתמונה, הדמיה או תוכנית לסרטונים שמוכרים",
@@ -46,22 +46,11 @@ export default function Landing() {
         <p className="rise" style={{ animationDelay: "0.7s" }}>
           תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם ובלי עורך, וגם לנכס שעוד לא נבנה.
         </p>
-        <div className="land-cta rise" style={{ animationDelay: "0.85s" }}>
-          <Link className="btn btn-primary btn-breathe" href="/projects">
-            התחילו בחינם
-          </Link>
+        <div className="rise" style={{ animationDelay: "0.85s" }}>
+          <HeroPrompt />
         </div>
       </section>
 
-      <section className="land-video rise" style={{ animationDelay: "0.85s" }} aria-label="מתמונה לסרטון">
-        <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
-        <p className="fine">
-          תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}
-          <a className="land-alt-link" href="/media/how-it-works.mp4">
-            לסרטון ההדרכה המלא
-          </a>
-        </p>
-      </section>
 
       <section className="land-show" aria-labelledby="show-title">
         <h2 id="show-title">ככה זה נראה</h2>
@@ -110,9 +99,9 @@ export default function Landing() {
 
       <section className="land-end">
         <h2>הנכס הבא שלכם יכול לעלות לאוויר כבר היום</h2>
-        <Link className="btn btn-primary" href="/projects">
+        <a className="btn btn-primary btn-breathe" href="#start">
           התחילו בחינם
-        </Link>
+        </a>
         <p className="fine">התצוגה המקדימה בסטודיו חינמית, גם בלי מנוי.</p>
       </section>
     </main>

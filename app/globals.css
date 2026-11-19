@@ -5974,3 +5974,188 @@ body:has(.land) .nav-links > *:nth-child(3) {
   position: relative;
   z-index: 40;
 }
+
+/* ---------- landing: the first action is the prompt ---------- */
+.hp {
+  width: min(100%, 680px);
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.hp-box {
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 12px;
+  border: 1px solid #ddd5c4;
+  border-radius: 26px;
+  background: var(--ivory);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 24px 60px rgba(40, 36, 20, 0.12);
+  text-align: right;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hp-box:focus-within,
+.hp-box.is-drag {
+  border-color: var(--ink);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 28px 70px rgba(40, 36, 20, 0.18);
+}
+
+.hp-box textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 4px 4px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.hp-box textarea::placeholder {
+  color: #9b958a;
+}
+
+.hp-files {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hp-file {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.hp-file img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.hp-file button {
+  position: absolute;
+  top: -6px;
+  inset-inline-start: -6px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ivory);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hp-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hp-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px 8px 12px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.hp-attach .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.hp-attach:hover {
+  border-color: var(--ink);
+}
+
+.hp-send {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ivory);
+  cursor: pointer;
+  animation: breathe 3.2s ease-in-out 1.6s infinite;
+}
+
+.hp-send::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: shine 6.4s ease-in-out 1.6s infinite;
+}
+
+.hp-send svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hp-ideas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hp-ideas button {
+  padding: 7px 14px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mute);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.hp-ideas button:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.land-hero {
+  padding-bottom: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-send,
+  .hp-send::after {
+    animation: none;
+  }
+}

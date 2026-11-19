@@ -44,6 +44,7 @@ import ShotCard from "./ShotCard";
 import ShotSheet from "./ShotSheet";
 import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
+import { takeHandoff } from "@/lib/handoff";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
@@ -117,6 +118,7 @@ export default function Studio() {
   const [openShot, setOpenShot] = useState<string | null>(null);
   const [changes, setChanges] = useState<Change[]>([]);
   const [renderOpen, setRenderOpen] = useState(false);
+  const [renderBrief, setRenderBrief] = useState("");
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -277,6 +279,17 @@ export default function Studio() {
     setAdding(0);
     if (failed) setNotice(`${failed} תמונות לא נפתחו. HEIC נפתח רק בספארי; אפשר לשמור כ-JPG ולנסות שוב.`);
   };
+
+  // something typed or attached on the landing page starts the project
+  useEffect(() => {
+    if (!hydrated) return;
+    const h = takeHandoff();
+    if (!h) return;
+    if (h.text) setRenderBrief(h.text);
+    if (h.files.length) addFiles(h.files);
+    else if (h.text) setRenderOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   // A render made from the plan joins the project like a photo, marked as a render.
   const addRender = async (file: Blob, room: RoomId) => {
@@ -1325,6 +1338,7 @@ export default function Studio() {
         aspect={settings.aspect}
         costLine={accounts ? `{n} קרדיטים (${CREDITS_PER_RENDER} להדמיה)` : `כ-$${RENDERS.render.pricePerImage.toFixed(2)} להדמיה`}
         onAdd={addRender}
+        initialBrief={renderBrief}
       />
 
       {player && (
