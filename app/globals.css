@@ -6415,3 +6415,64 @@ body {
 .marquee {
   direction: ltr;
 }
+
+/* ---------- hero glow as ground: full width at the bottom, runs on under the reels, arrives after the page ---------- */
+.land-hero {
+  padding: 0 0 12vh;
+  gap: 10px;
+}
+
+.land-hero h1 {
+  margin-bottom: 0;
+}
+
+.land-sub {
+  margin-top: -2px !important;
+}
+
+.hp-wrap {
+  margin-top: 26px;
+}
+
+.land-hero::after {
+  display: none;
+}
+
+.land-hero::before {
+  top: 42%;
+  bottom: -420px;
+  height: auto;
+  clip-path: none;
+  background: linear-gradient(90deg, #4f5bd5 0%, #962fbf 28%, #d62976 52%, #fa7e1e 76%, #feda75 100%);
+  filter: blur(36px) saturate(1.1);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 34%, #000 58%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 34%, #000 58%, transparent 100%);
+  opacity: 0;
+  animation: glow-in 1.8s ease-out 1.3s forwards;
+}
+
+@keyframes glow-in {
+  to {
+    opacity: 0.82;
+  }
+}
+
+@media (max-width: 759px) {
+  .land-hero::before {
+    background: linear-gradient(90deg, #4f5bd5 0%, #962fbf 28%, #d62976 52%, #fa7e1e 76%, #feda75 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-hero::before {
+    animation: none;
+    opacity: 0.82;
+  }
+}
+
+/* reels sit on the glow */
+.land-show {
+  position: relative;
+  z-index: 1;
+  margin-top: -40px;
+}
