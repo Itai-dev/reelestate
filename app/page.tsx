@@ -51,12 +51,13 @@ export default function Landing() {
       </section>
 
 
-      <section className="land-show" aria-labelledby="show-title">
-        <h2 id="show-title">ככה זה נראה</h2>
-        <div className="land-reels">
-          {SHOWCASE.map((src) => (
-            <LoopVideo key={src} src={src} className="land-reel" />
-          ))}
+      <section className="land-show" aria-label="סרטונים שנוצרו">
+        <div className="marquee">
+          <div className="marquee-track">
+            {[...SHOWCASE, ...SHOWCASE].map((src, i) => (
+              <LoopVideo key={i} src={src} className="land-reel" />
+            ))}
+          </div>
         </div>
       </section>
 

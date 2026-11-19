@@ -56,7 +56,7 @@ export default function HeroPrompt() {
         <textarea
           id="hp-text"
           ref={area}
-          rows={3}
+          rows={1}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -65,7 +65,7 @@ export default function HeroPrompt() {
               go();
             }
           }}
-          placeholder="תארו את הנכס, או צרפו תמונות, הדמיות או תוכנית"
+          placeholder="תארו את הנכס או צרפו תמונות"
         />
         {files.length > 0 && (
           <div className="hp-files">
@@ -86,7 +86,7 @@ export default function HeroPrompt() {
             צירוף תמונות
           </button>
           <input ref={input} type="file" accept="image/*,.heic,.heif" multiple hidden onChange={(e) => add(e.target.files)} />
-          <button type="submit" className="hp-send" aria-label="יוצרים סרטון">
+          <button type="submit" className="hp-send" aria-label="יוצרים סרטון" data-ready={text.trim() !== "" || files.length > 0}>
             <svg viewBox="0 0 24 24" aria-hidden>
               <path d="M12 19V5M6 11l6-6 6 6" />
             </svg>

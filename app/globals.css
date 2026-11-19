@@ -6296,3 +6296,113 @@ body:has(.land) .nav-links > *:nth-child(3) {
       radial-gradient(ellipse 60% 34% at 88% 80%, #fa7e1e 0%, transparent 70%);
   }
 }
+
+/* prompt: one line, no focus ring, a black send arrow that wakes up when there's something to send */
+.hp-box {
+  min-height: 0;
+}
+
+.hp-box textarea {
+  min-height: 0;
+  height: 1.6em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 6px 4px 14px;
+}
+
+.hp-box:focus-within,
+.hp-box.is-drag {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 30px 80px rgba(80, 30, 60, 0.22);
+}
+
+.hp-box textarea:focus,
+.hp-box textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.hp-send {
+  background: var(--ink);
+  opacity: 0.28;
+  transition: opacity 0.25s ease;
+  animation: none;
+}
+
+.hp-send::after {
+  display: none;
+}
+
+.hp-send[data-ready="true"] {
+  opacity: 1;
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+.hp-send[data-ready="true"]::after {
+  display: block;
+}
+
+/* the glow stays inside the hero and fades out before the reels */
+.land-hero::before {
+  clip-path: inset(0 0 0 0);
+}
+
+.land-hero::after {
+  height: 170px;
+}
+
+/* reels: a slow endless carousel */
+.land-show {
+  margin-top: 8px;
+}
+
+.marquee {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  direction: ltr;
+  animation: marquee 70s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee .land-reel {
+  width: 230px;
+  flex: none;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-50% - 7px));
+  }
+}
+
+@media (max-width: 759px) {
+  .marquee .land-reel {
+    width: 46vw;
+  }
+  .marquee-track {
+    animation-duration: 50s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+  }
+  .marquee-track {
+    animation: none;
+  }
+}
