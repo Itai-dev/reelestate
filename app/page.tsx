@@ -39,16 +39,13 @@ export default function Landing() {
   return (
     <main className="land">
       <section className="land-hero">
-        <h1>
-          מתמונה של הנכס ל-⁠Reel שמוכר
-          <span className="h1-line">בשפה של המותג שלכם</span>
-        </h1>
+        <h1>מתמונה של הנכס לReels שמוכרים</h1>
         <p>
-          לסוכנים, למשרדי תיווך וליזמים. בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
+          בשפה של המותג שלכם, לסוכנים, למשרדי תיווך וליזמים. בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
         </p>
         <div className="land-cta">
           <Link className="btn btn-primary" href="/projects">
-            מתחילים בחינם
+            התחילו בחינם
           </Link>
         </div>
       </section>
@@ -111,7 +108,7 @@ export default function Landing() {
       <section className="land-end">
         <h2>הנכס הבא שלכם יכול לעלות לאוויר כבר היום</h2>
         <Link className="btn btn-primary" href="/projects">
-          מתחילים בחינם
+          התחילו בחינם
         </Link>
         <p className="fine">התצוגה המקדימה בסטודיו חינמית, גם בלי מנוי.</p>
       </section>
