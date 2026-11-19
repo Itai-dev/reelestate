@@ -5472,3 +5472,9 @@ details[open] > summary::after {
     animation: none !important;
   }
 }
+
+/* room for the copper extrusion and its shadow inside the reveal mask */
+.rl:has(.h1-hero) {
+  padding: 0.05em 0.3em 0.4em;
+  margin: 0 -0.3em -0.32em;
+}
