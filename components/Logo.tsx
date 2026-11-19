@@ -24,7 +24,7 @@ export default function Logo({ size = 34 }: { size?: number }) {
   return (
     <span className="logo" dir="ltr">
       <LogoMark size={size} />
-      <Wordmark />
+      <span className="logo-word">Reel Estate</span>
     </span>
   );
 }
