@@ -5671,3 +5671,61 @@ details[open] > summary::after {
   color: var(--ink);
   -webkit-text-stroke: 0;
 }
+
+/* ---------- landing load: nav, headline letters, subtitle, button, phone ---------- */
+.rl {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0.04em 0.1em 0.14em;
+}
+
+.rl > .lt {
+  display: inline-block;
+  animation: lt-up 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes lt-up {
+  from {
+    transform: translateY(115%);
+  }
+}
+
+.h1-hand.rl {
+  padding: 0.04em 0.15em 0.12em;
+}
+
+.land-hero .h1-lead {
+  font-size: clamp(22px, 3.4vw, 38px);
+}
+
+body:has(.land) .nav-brand,
+body:has(.land) .nav-links > *,
+body:has(.land) .nav-account > * {
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+body:has(.land) .nav-brand {
+  animation-delay: 0.05s;
+}
+
+body:has(.land) .nav-links > *:nth-child(1) {
+  animation-delay: 0.12s;
+}
+
+body:has(.land) .nav-links > *:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+body:has(.land) .nav-links > *:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rl > .lt,
+  body:has(.land) .nav-brand,
+  body:has(.land) .nav-links > *,
+  body:has(.land) .nav-account > * {
+    animation: none !important;
+  }
+}

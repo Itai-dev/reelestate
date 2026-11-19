@@ -4,7 +4,7 @@ import LoopVideo from "@/components/LoopVideo";
 import PhoneDemo from "@/components/PhoneDemo";
 
 export const metadata: Metadata = {
-  title: "Reel Estate — מתמונה של הנכס לסרטונים שמוכרים",
+  title: "Reel Estate — מתמונה, הדמיה או תוכנית לסרטונים שמוכרים",
   description: "מעלים תמונות או תוכנית, מדביקים לינק לאתר, ומקבלים Reel לנכס בשפה של המותג. שינויים בשורה אחת, גם בקול.",
 };
 
@@ -35,33 +35,38 @@ const FEATURES = [
   { t: "כל הפורמטים", d: "Reel וסטורי, פיד, ריבוע ואתר. מאותו פרויקט, בלחיצה." },
 ];
 
+// A line whose letters rise one by one out of a mask.
+function Letters({ text, className, start, step }: { text: string; className: string; start: number; step: number }) {
+  return (
+    <span className={`rl ${className}`} aria-hidden>
+      {Array.from(text).map((ch, i) => (
+        <span key={i} className="lt" style={{ animationDelay: `${(start + i * step).toFixed(3)}s` }}>
+          {ch === " " ? "\u00a0" : ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function Landing() {
   return (
     <main className="land">
       <section className="land-hero">
-        <h1 className="reveal">
-          <span className="rl">
-            <span className="h1-lead">מתמונה של הנכס</span>
-          </span>
-          <span className="h1-hand" aria-label="לסרטונים שמוכרים.">
-            {Array.from("לסרטונים שמוכרים.").map((ch, i) => (
-              <span key={i} className="hw" style={{ animationDelay: `${0.45 + i * 0.075}s` }} aria-hidden>
-                {ch === " " ? "\u00a0" : ch}
-              </span>
-            ))}
-          </span>
+        <h1 className="reveal" aria-label="מתמונה, הדמיה או תוכנית לסרטונים שמוכרים.">
+          <Letters className="h1-lead" text="מתמונה, הדמיה או תוכנית" start={0.3} step={0.022} />
+          <Letters className="h1-hand" text="לסרטונים שמוכרים." start={0.62} step={0.035} />
         </h1>
-        <p className="rise" style={{ animationDelay: "0.75s" }}>
-          תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
+        <p className="rise" style={{ animationDelay: "1.35s" }}>
+          תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם ובלי עורך, וגם לנכס שעוד לא נבנה.
         </p>
-        <div className="land-cta rise" style={{ animationDelay: "0.9s" }}>
+        <div className="land-cta rise" style={{ animationDelay: "1.5s" }}>
           <Link className="btn btn-primary" href="/projects">
             התחילו בחינם
           </Link>
         </div>
       </section>
 
-      <section className="land-video rise" style={{ animationDelay: "1.05s" }} aria-label="מתמונה לסרטון">
+      <section className="land-video rise" style={{ animationDelay: "1.65s" }} aria-label="מתמונה לסרטון">
         <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
         <p className="fine">
           תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}
