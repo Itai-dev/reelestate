@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       ...FAL_HOSTS.map((h) => ({ source: `/fal-media/${h}/:path*`, destination: `https://${h}.fal.media/:path*` })),
       { source: "/fal-media/root/:path*", destination: "https://fal.media/:path*" },
       // example reels for the landing page, served from our own domain
+      { source: "/clips/:file", destination: "https://d2ol7oe51mr4n9.cloudfront.net/user_2zuj9oWHVNx5pd0yLqMmtmrn8F4/:file" },
       { source: "/showcase/:file", destination: "https://d8j0ntlcm91z4.cloudfront.net/user_2zuj9oWHVNx5pd0yLqMmtmrn8F4/:file" },
     ];
   },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LoopVideo from "@/components/LoopVideo";
+import PhoneDemo from "@/components/PhoneDemo";
 
 export const metadata: Metadata = {
   title: "Reel Estate — מתמונות של נכס לרילס ממותג",
@@ -8,9 +9,9 @@ export const metadata: Metadata = {
 };
 
 const STEPS = [
-  { t: "מעלים תמונות", d: "4 עד 10 תמונות של הנכס. אין עדיין? מעלים תוכנית ורפרנסים ונוצרות הדמיות." },
-  { t: "מדביקים לינק לאתר", d: "הלוגו, הצבעים, הפונטים ושפת הצילום של המותג נכנסים לסרטון לבד." },
-  { t: "מקבלים רילס", d: "תנועת מצלמה לכל חלל, טקסטים שנכתבים לבד, וכרטיס סיום עם קריאה לפעולה." },
+  { t: "מעלים 4 עד 10 תמונות", d: "גם כאלה שצולמו בטלפון. עוד אין תמונות? מעלים תוכנית ורפרנסים, ונוצרות הדמיות." },
+  { t: "מדביקים לינק לאתר שלכם", d: "הלוגו, הצבעים והפונטים נכנסים לסרטון לבד. בלי להעלות קבצים." },
+  { t: "מקבלים רילס מוכן לפרסום", d: "תנועת מצלמה לכל חלל, טקסטים כתובים, וכרטיס סיום עם הטלפון שלכם." },
 ];
 
 const clip = (ts: string, id: string) => `/showcase/hf_${ts}_${id}.mp4`;
@@ -40,23 +41,26 @@ export default function Landing() {
       <section className="land-hero">
         <h1>מתמונות של נכס לרילס שמוכר, בשפה של המותג שלכם</h1>
         <p>
-          לסוכנים, למשרדי תיווך וליזמים. בלי צלם וידאו, בלי עורך, ובלי לחכות שבוע.
+          לסוכנים, למשרדי תיווך וליזמים. בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
         </p>
         <div className="land-cta">
-          <Link className="btn btn-primary" href="/studio">
-            מתחילים, בחינם
+          <Link className="btn btn-primary" href="/projects">
+            מתחילים בחינם
           </Link>
-          <Link className="btn btn-outline" href="/pricing">
-            מחירים
+          <Link className="land-alt-link" href="/pricing">
+            כמה זה עולה?
           </Link>
         </div>
       </section>
 
-      <section className="land-video" aria-label="איך זה עובד">
-        <div className="land-frame">
-          <video src="/media/how-it-works.mp4" poster="/media/how-it-works.jpg" controls playsInline preload="metadata" />
-        </div>
-        <p className="fine">איך זה עובד, בחצי דקה</p>
+      <section className="land-video" aria-label="מתמונה לסרטון">
+        <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
+        <p className="fine">
+          תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}
+          <a className="land-alt-link" href="/media/how-it-works.mp4">
+            לסרטון ההדרכה המלא
+          </a>
+        </p>
       </section>
 
       <section className="land-show" aria-labelledby="show-title">
@@ -69,7 +73,7 @@ export default function Landing() {
       </section>
 
       <section className="land-steps" aria-labelledby="steps-title">
-        <h2 id="steps-title">שלושה צעדים</h2>
+        <h2 id="steps-title">איך זה עובד</h2>
         <ol>
           {STEPS.map((s, i) => (
             <li key={s.t}>
@@ -85,11 +89,11 @@ export default function Landing() {
         <div>
           <h2>עוד אין תמונות?</h2>
           <p>
-            מעלים תוכנית דירה, רפרנסים לסגנון ומשפט על הנכס. המערכת מציעה חללים ויוצרת הדמיה לכל אחד, באותו סגנון. הסרטון מסומן
-            &quot;הדמיה להמחשה בלבד&quot;.
+            מעלים תוכנית דירה, כמה תמונות השראה ומשפט על הנכס. אנחנו מציעים חללים ויוצרים הדמיה לכל אחד, באותו סגנון. על הסרטון
+            יופיע &quot;הדמיה להמחשה בלבד&quot;, כמו שצריך.
           </p>
-          <Link className="btn btn-light" href="/studio">
-            מנסים עם תוכנית
+          <Link className="btn btn-light" href="/projects">
+            מעלים תוכנית
           </Link>
         </div>
         <LoopVideo src={PLAN_CLIP} className="land-plan" />
@@ -105,10 +109,11 @@ export default function Landing() {
       </section>
 
       <section className="land-end">
-        <h2>הנכס הבא שלכם יכול לצאת לאוויר היום</h2>
-        <Link className="btn btn-primary" href="/studio">
-          פותחים פרויקט
+        <h2>הנכס הבא שלכם יכול לעלות לאוויר כבר היום</h2>
+        <Link className="btn btn-primary" href="/projects">
+          מתחילים בחינם
         </Link>
+        <p className="fine">התצוגה המקדימה בסטודיו חינמית, גם בלי מנוי.</p>
       </section>
     </main>
   );

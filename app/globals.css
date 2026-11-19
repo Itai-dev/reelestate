@@ -5111,3 +5111,201 @@ details[open] > summary::after {
   height: 26px;
   margin-block: 0;
 }
+
+/* ---------- landing: hero phone, a photo becomes a video ---------- */
+.pd {
+  width: min(100%, 340px);
+  padding: 10px;
+  background: var(--ink);
+  border-radius: 44px;
+  box-shadow: 0 30px 80px rgba(40, 36, 20, 0.28);
+}
+
+.pd-screen {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 34px;
+  overflow: hidden;
+  background: var(--bg);
+  isolation: isolate;
+}
+
+.pd-drop {
+  position: absolute;
+  inset: 14px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  border: 1.5px dashed #cdc5b5;
+  border-radius: 24px;
+  color: var(--olive);
+  text-align: center;
+  transition: opacity 0.4s ease;
+}
+
+.pd-drop b {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  max-width: 16ch;
+}
+
+.pd-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.pd-icons .ico {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.5;
+}
+
+.pd-photo,
+.pd-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* the photo arrives as a dragged thumbnail, then settles full screen */
+.pd-photo {
+  border-radius: 14px;
+  transform: translate(10%, 62%) rotate(-7deg) scale(0.42);
+  opacity: 0;
+  box-shadow: 0 18px 40px rgba(29, 28, 25, 0.35);
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.35s ease,
+    border-radius 0.9s ease;
+}
+
+.pd[data-phase="drop"] .pd-photo {
+  opacity: 1;
+  animation: pd-arrive 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes pd-arrive {
+  from {
+    transform: translate(40%, 120%) rotate(-14deg) scale(0.36);
+  }
+}
+
+.pd[data-phase="photo"] .pd-photo,
+.pd[data-phase="work"] .pd-photo,
+.pd[data-phase="video"] .pd-photo {
+  opacity: 1;
+  transform: none;
+  border-radius: 0;
+}
+
+.pd:not([data-phase="drop"]) .pd-drop {
+  opacity: 0;
+}
+
+.pd-video {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.pd[data-phase="video"] .pd-video {
+  opacity: 1;
+}
+
+.pd-work {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding-bottom: 28px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.pd[data-phase="work"] .pd-work {
+  opacity: 1;
+}
+
+.pd-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 250, 240, 0.45) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: pd-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes pd-sweep {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -20% 0;
+  }
+}
+
+.pd-status {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(29, 28, 25, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--ivory);
+  font-size: 14px;
+}
+
+.pd-status .ico {
+  width: 16px;
+  height: 16px;
+  fill: var(--copper);
+  stroke-width: 0;
+  animation: pd-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pd-pulse {
+  50% {
+    transform: scale(0.75) rotate(45deg);
+  }
+}
+
+.pd-chip {
+  position: absolute;
+  top: 16px;
+  inset-inline-start: 16px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.88);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pd:not([data-phase="drop"]) .pd-chip {
+  opacity: 1;
+}
+
+.land-alt-link {
+  color: var(--mute);
+  font-size: 15px;
+}
+
+.land-alt-link:hover {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd *,
+  .pd *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}

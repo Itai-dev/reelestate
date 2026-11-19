@@ -876,8 +876,8 @@ export default function Studio() {
                         <em>חוץ</em>
                       </i>
                     </span>
-                    <span className="drop-title">גררו לכאן תמונות של הנכס</span>
-                    <span className="drop-sub">או לחצו כדי לבחור מהמכשיר. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
+                    <span className="drop-title">גוררים לכאן תמונות של הנכס</span>
+                    <span className="drop-sub">או לוחצים כדי לבחור מהטלפון או מהמחשב. 4 עד 10 תמונות הן רילס של 20–40 שניות.</span>
                   </div>
                   {live && !locked && (
                     <button type="button" className="start-alt" onClick={() => setRenderOpen(true)}>
