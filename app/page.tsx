@@ -4,7 +4,7 @@ import LoopVideo from "@/components/LoopVideo";
 import PhoneDemo from "@/components/PhoneDemo";
 
 export const metadata: Metadata = {
-  title: "Reel Estate — מתמונה של הנכס ל-Reel ממותג",
+  title: "Reel Estate — מתמונה של הנכס ל-⁠Reel ממותג",
   description: "מעלים תמונות או תוכנית, מדביקים לינק לאתר, ומקבלים Reel לנכס בשפה של המותג. שינויים בשורה אחת, גם בקול.",
 };
 
@@ -40,7 +40,7 @@ export default function Landing() {
     <main className="land">
       <section className="land-hero">
         <h1>
-          מתמונה של הנכס ל-Reel שמוכר
+          מתמונה של הנכס ל-⁠Reel שמוכר
           <span className="h1-line">בשפה של המותג שלכם</span>
         </h1>
         <p>

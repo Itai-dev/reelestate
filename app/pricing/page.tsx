@@ -39,7 +39,7 @@ export default async function PricingPage() {
                 <b>{ils(p.price)}</b> <span>לחודש</span>
               </p>
               <p className="plan-reel">
-                כ-{reels} Reels בחודש, {ils(Math.round(p.price / reels))} ל-Reel
+                כ-{reels} Reels בחודש, {ils(Math.round(p.price / reels))} ל-⁠Reel
               </p>
               <ul>
                 {p.perks.map((perk) => (
@@ -121,7 +121,7 @@ export default async function PricingPage() {
         </details>
         <details>
           <summary>הסרטונים שלי?</summary>
-          <p>הסרטונים שלכם, לשימוש מסחרי ללא הגבלה. הקליפים נשמרים בדפדפן שבו יצרתם אותם, אז כדאי לייצא ולשמור את ה-Reel.</p>
+          <p>הסרטונים שלכם, לשימוש מסחרי ללא הגבלה. הקליפים נשמרים בדפדפן שבו יצרתם אותם, אז כדאי לייצא ולשמור את ה-⁠Reel.</p>
         </details>
       </section>
     </main>

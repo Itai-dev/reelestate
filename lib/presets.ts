@@ -198,7 +198,7 @@ export const DEFAULT_MODEL: ModelKey = "wan720";
 // What customers choose: a level of quality, never a model name.
 export type Quality = "standard" | "hd" | "premium";
 export const QUALITIES: Record<Quality, { he: string; note: string; model: ModelKey }> = {
-  standard: { he: "רגיל", note: "720p. ל-Reel, לסטורי ולמודעות. הכי מהיר.", model: "wan720" },
+  standard: { he: "רגיל", note: "720p. ל-⁠Reel, לסטורי ולמודעות. הכי מהיר.", model: "wan720" },
   hd: { he: "HD", note: "1080p. לאתר, ליוטיוב ולמסכים גדולים.", model: "wan1080" },
   premium: { he: "פרימיום", note: "הריאליזם הכי גבוה, לנכסי יוקרה ולשוט הפתיחה. לוקח כמה דקות.", model: "seedance720" },
 };

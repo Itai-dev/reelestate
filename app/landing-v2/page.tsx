@@ -5,7 +5,7 @@ import LoopVideo from "@/components/LoopVideo";
 export const metadata: Metadata = {
   robots: { index: false },
   title: "Reel Estate — Reel לנכס, גם לפני שהבניין קיים",
-  description: "מתוכנית, הדמיה או תמונות של הנכס ל-Reel ממותג. מדביקים לינק לאתר, ומשנים כל דבר במשפט אחד.",
+  description: "מתוכנית, הדמיה או תמונות של הנכס ל-⁠Reel ממותג. מדביקים לינק לאתר, ומשנים כל דבר במשפט אחד.",
 };
 
 const clip = (ts: string, id: string) => `/showcase/hf_${ts}_${id}.mp4`;

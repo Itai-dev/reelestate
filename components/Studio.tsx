@@ -1054,7 +1054,7 @@ export default function Studio() {
                       <IconPlay />
                     </span>
                     <span className="poster-text">
-                      <b>{info.name || "צפייה ב-Reel"}</b>
+                      <b>{info.name || "צפייה ב-⁠Reel"}</b>
                       <small>
                         כ-{totalSeconds} שניות, {ASPECTS[settings.aspect].hint}
                       </small>
@@ -1247,11 +1247,11 @@ export default function Studio() {
         {shots.length > 0 && <aside className="col-side">
           <section
             className="sum"
-            aria-label="ה-Reel"
+            aria-label="ה-⁠Reel"
             style={shots[0] && media[shots[0].id] ? ({ "--photo": `url(${media[shots[0].id].img})` } as React.CSSProperties) : undefined}
           >
             <p className="sum-head">
-              <b>{info.name || "ה-Reel"}</b>
+              <b>{info.name || "ה-⁠Reel"}</b>
             </p>
             <p className="sum-sub">{shots.length ? `${shots.length} חללים, כ-${totalSeconds} שניות, ${ASPECTS[settings.aspect].hint}` : "מתחילים מתמונות של הנכס"}</p>
             <SaveState cloud={cloud} user={user} />
