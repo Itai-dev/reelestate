@@ -4,7 +4,7 @@ import LoopVideo from "@/components/LoopVideo";
 import PhoneDemo from "@/components/PhoneDemo";
 
 export const metadata: Metadata = {
-  title: "Reel Estate — מתמונה של הנכס למודעות שמוכרות",
+  title: "Reel Estate — מתמונה של הנכס לסרטונים שמוכרים",
   description: "מעלים תמונות או תוכנית, מדביקים לינק לאתר, ומקבלים Reel לנכס בשפה של המותג. שינויים בשורה אחת, גם בקול.",
 };
 
@@ -43,8 +43,12 @@ export default function Landing() {
           <span className="rl">
             <span className="h1-lead">מתמונה של הנכס</span>
           </span>
-          <span className="rl">
-            <span className="h1-hero">למודעות שמוכרות</span>
+          <span className="h1-hand">
+            <span className="h1-write">לסרטונים שמוכרים</span>
+            <svg className="h1-swash" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden>
+              <path d="M590 14 C 520 40, 380 52, 240 46 C 150 42, 70 34, 12 22" pathLength="1" />
+              <circle cx="4" cy="12" r="5" />
+            </svg>
           </span>
         </h1>
         <p className="rise" style={{ animationDelay: "0.75s" }}>
