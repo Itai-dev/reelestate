@@ -6872,3 +6872,23 @@ body:has(.auth) .site-foot {
   font-weight: 600;
   flex: none;
 }
+
+/* phones: the form alone, no reel */
+@media (max-width: 859px) {
+  .auth {
+    grid-template-rows: 1fr;
+  }
+  .auth-media {
+    display: none;
+  }
+  .auth-logo .logo {
+    color: var(--ink);
+  }
+  .auth-form {
+    padding: 72px 22px 32px;
+  }
+  .auth-body {
+    align-self: center;
+    padding: 0;
+  }
+}
