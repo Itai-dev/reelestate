@@ -30,7 +30,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
         <h1>{item.name}</h1>
         <p>
           {item.kind === "subscription"
-            ? `${ils(item.price)} לחודש, ${item.credits} קרדיטים בכל חודש (כ-${Math.floor(item.credits / CREDITS_PER_REEL)} רילסים). מבטלים מתי שרוצים.`
+            ? `${ils(item.price)} לחודש, ${item.credits} קרדיטים בכל חודש (כ-${Math.floor(item.credits / CREDITS_PER_REEL)} Reels). מבטלים מתי שרוצים.`
             : `${ils(item.price)} בתשלום אחד, ${item.credits} קרדיטים שלא פגים.`}
         </p>
       </header>

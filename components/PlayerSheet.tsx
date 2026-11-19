@@ -173,9 +173,9 @@ export default function PlayerSheet(p: Props) {
     navigator.canShare?.({ files: [new File([file.blob], file.name, { type: file.blob.type })] });
 
   return (
-    <div className="sheet" role="dialog" aria-modal="true" aria-label="הרילס">
+    <div className="sheet" role="dialog" aria-modal="true" aria-label="ה-Reel">
       <header className="sheet-head">
-        <h2>הרילס</h2>
+        <h2>ה-Reel</h2>
         <button type="button" className="btn btn-onDark" onClick={p.onClose} disabled={phase === "recording"}>
           סגירה
         </button>
@@ -187,7 +187,7 @@ export default function PlayerSheet(p: Props) {
           className="stage-canvas"
           onClick={phase === "ready" || phase === "done" ? toggle : undefined}
         />
-        {phase === "loading" && <p className="stage-note">מכין את הרילס…</p>}
+        {phase === "loading" && <p className="stage-note">מכין את ה-Reel…</p>}
       </div>
 
       <div className="sheet-controls">
@@ -199,7 +199,7 @@ export default function PlayerSheet(p: Props) {
               <span style={{ width: `${total ? (t / total) * 100 : 0}%` }} />
             </div>
             <p>
-              מקליט את הרילס בזמן אמת ({fmt(t)} מתוך {fmt(total)}). השאירו את המסך פתוח עד הסוף.
+              מקליט את ה-Reel בזמן אמת ({fmt(t)} מתוך {fmt(total)}). השאירו את המסך פתוח עד הסוף.
             </p>
           </div>
         ) : (
@@ -220,7 +220,7 @@ export default function PlayerSheet(p: Props) {
                 value={t}
                 disabled={phase === "loading"}
                 onChange={(e) => playerRef.current?.seek(Number(e.target.value))}
-                aria-label="מיקום ברילס"
+                aria-label="מיקום ב-Reel"
               />
               <span className="time" dir="ltr">
                 {fmt(t)} / {fmt(total)}

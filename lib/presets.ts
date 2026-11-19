@@ -4,7 +4,7 @@
 export type Aspect = "9:16" | "4:5" | "1:1" | "16:9";
 
 export const ASPECTS: Record<Aspect, { w: number; h: number; label: string; hint: string }> = {
-  "9:16": { w: 1080, h: 1920, label: "9:16", hint: "רילס וסטורי" },
+  "9:16": { w: 1080, h: 1920, label: "9:16", hint: "Reel וסטורי" },
   "4:5": { w: 1080, h: 1350, label: "4:5", hint: "פיד" },
   "1:1": { w: 1080, h: 1080, label: "1:1", hint: "ריבוע" },
   "16:9": { w: 1920, h: 1080, label: "16:9", hint: "אתר ויוטיוב" },
@@ -198,7 +198,7 @@ export const DEFAULT_MODEL: ModelKey = "wan720";
 // What customers choose: a level of quality, never a model name.
 export type Quality = "standard" | "hd" | "premium";
 export const QUALITIES: Record<Quality, { he: string; note: string; model: ModelKey }> = {
-  standard: { he: "רגיל", note: "720p. לרילס, לסטורי ולמודעות. הכי מהיר.", model: "wan720" },
+  standard: { he: "רגיל", note: "720p. ל-Reel, לסטורי ולמודעות. הכי מהיר.", model: "wan720" },
   hd: { he: "HD", note: "1080p. לאתר, ליוטיוב ולמסכים גדולים.", model: "wan1080" },
   premium: { he: "פרימיום", note: "הריאליזם הכי גבוה, לנכסי יוקרה ולשוט הפתיחה. לוקח כמה דקות.", model: "seedance720" },
 };

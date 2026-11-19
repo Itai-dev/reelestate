@@ -102,7 +102,7 @@ export default function ChangeBar(p: {
             <li key={c.id} className={`is-${c.state}`}>
               <b>{c.text}</b>
               {c.state === "working" ? (
-                <Thinking compact lines={[c.reply || "מבין מה לשנות", "מעדכן את הרילס"]} />
+                <Thinking compact lines={[c.reply || "מבין מה לשנות", "מעדכן את ה-Reel"]} />
               ) : (
                 <span>
                   {c.reply}

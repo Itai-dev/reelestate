@@ -5329,3 +5329,7 @@ details[open] > summary::after {
 .land-cta {
   align-items: center;
 }
+
+.h1-line {
+  display: block;
+}

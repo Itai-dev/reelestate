@@ -22,7 +22,7 @@ export default async function PricingPage() {
       <header className="page-head">
         <h1>משלמים לפי כמה סרטונים מייצרים</h1>
         <p>
-          כל מסלול כולל קרדיטים לחודש. רילס של 6 חללים לוקח בערך {CREDITS_PER_REEL} קרדיטים. התצוגה המקדימה בסטודיו חינמית, גם בלי מנוי.
+          כל מסלול כולל קרדיטים לחודש. Reel של 6 חללים לוקח בערך {CREDITS_PER_REEL} קרדיטים. התצוגה המקדימה בסטודיו חינמית, גם בלי מנוי.
         </p>
       </header>
 
@@ -39,7 +39,7 @@ export default async function PricingPage() {
                 <b>{ils(p.price)}</b> <span>לחודש</span>
               </p>
               <p className="plan-reel">
-                כ-{reels} רילסים בחודש, {ils(Math.round(p.price / reels))} לרילס
+                כ-{reels} Reels בחודש, {ils(Math.round(p.price / reels))} ל-Reel
               </p>
               <ul>
                 {p.perks.map((perk) => (
@@ -121,7 +121,7 @@ export default async function PricingPage() {
         </details>
         <details>
           <summary>הסרטונים שלי?</summary>
-          <p>הסרטונים שלכם, לשימוש מסחרי ללא הגבלה. הקליפים נשמרים בדפדפן שבו יצרתם אותם, אז כדאי לייצא ולשמור את הרילס.</p>
+          <p>הסרטונים שלכם, לשימוש מסחרי ללא הגבלה. הקליפים נשמרים בדפדפן שבו יצרתם אותם, אז כדאי לייצא ולשמור את ה-Reel.</p>
         </details>
       </section>
     </main>

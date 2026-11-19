@@ -138,7 +138,7 @@ export default function BrandPanel(p: Props) {
           <label className="toggle">
             <span>
               <b>גוון צבע של המותג</b>
-              <small>חם או קר, רווי או עדין, על כל הרילס</small>
+              <small>חם או קר, רווי או עדין, על כל ה-Reel</small>
             </span>
             <input type="checkbox" role="switch" checked={b.applyGrade} onChange={(e) => p.onChange({ applyGrade: e.target.checked })} />
           </label>

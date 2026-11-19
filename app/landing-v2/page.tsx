@@ -4,8 +4,8 @@ import LoopVideo from "@/components/LoopVideo";
 
 export const metadata: Metadata = {
   robots: { index: false },
-  title: "Reel Estate — רילס לנכס, גם לפני שהבניין קיים",
-  description: "מתוכנית, הדמיה או תמונות של הנכס לרילס ממותג. מדביקים לינק לאתר, ומשנים כל דבר במשפט אחד.",
+  title: "Reel Estate — Reel לנכס, גם לפני שהבניין קיים",
+  description: "מתוכנית, הדמיה או תמונות של הנכס ל-Reel ממותג. מדביקים לינק לאתר, ומשנים כל דבר במשפט אחד.",
 };
 
 const clip = (ts: string, id: string) => `/showcase/hf_${ts}_${id}.mp4`;
@@ -36,7 +36,7 @@ export default function Landing() {
       {/* hero: the result first */}
       <section className="lp-hero">
         <div className="lp-hero-text">
-          <h1>רילס לנכס, גם לפני שהבניין קיים</h1>
+          <h1>Reel לנכס, גם לפני שהבניין קיים</h1>
           <p>מתוכנית, מהדמיה או מתמונות של הנכס, לסרטון ממותג לסושיאל. בלי צלם, בלי עורך, באותו יום.</p>
           <div className="lp-cta">
             <Link className="btn btn-primary btn-lg" href="/studio">
@@ -129,7 +129,7 @@ export default function Landing() {
         <div className="lp-step">
           <div className="lp-step-text">
             <span className="lp-num">3</span>
-            <h3>מקבלים רילס, ומשנים במשפט</h3>
+            <h3>מקבלים Reel, ומשנים במשפט</h3>
             <p>טקסט שעוצר גלילה, תנועת מצלמה לכל חלל וכרטיס סיום עם קריאה לפעולה. רוצים שינוי? כותבים או אומרים אותו.</p>
           </div>
           <div className="lp-mock lp-mock-reel" aria-hidden>
@@ -169,7 +169,7 @@ export default function Landing() {
         </article>
         <article className="lp-who-card">
           <h3>לסוכנים ולמשרדים</h3>
-          <p>כל נכס שנכנס לבלעדיות יוצא לאוויר עם רילס באותו יום, בשפה של המשרד.</p>
+          <p>כל נכס שנכנס לבלעדיות יוצא לאוויר עם Reel באותו יום, בשפה של המשרד.</p>
           <div className="lp-who-reels">
             {HOMES.slice(2).map((src) => (
               <LoopVideo key={src} src={src} className="lp-who-video" />
