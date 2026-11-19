@@ -5309,3 +5309,23 @@ details[open] > summary::after {
     transition: none !important;
   }
 }
+
+.pd[data-phase="drop"] .pd-video {
+  transition: none;
+}
+
+.pd-work::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(29, 28, 25, 0.45), transparent 45%);
+}
+
+.pd-status {
+  background: rgba(29, 28, 25, 0.85);
+  font-weight: 500;
+}
+
+.land-cta {
+  align-items: center;
+}

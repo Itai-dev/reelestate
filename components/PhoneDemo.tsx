@@ -75,7 +75,7 @@ export default function PhoneDemo({ photo, video }: { photo: string; video: stri
           muted
           playsInline
           preload="metadata"
-          onEnded={() => setPhase("drop")}
+          onEnded={() => setTimeout(() => setPhase("drop"), 1200)}
           aria-label="הסרטון שנוצר מהתמונה"
         />
         <div className="pd-work" aria-hidden>
