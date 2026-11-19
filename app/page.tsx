@@ -35,38 +35,25 @@ const FEATURES = [
   { t: "כל הפורמטים", d: "Reel וסטורי, פיד, ריבוע ואתר. מאותו פרויקט, בלחיצה." },
 ];
 
-// A line whose letters rise one by one out of a mask.
-function Letters({ text, className, start, step }: { text: string; className: string; start: number; step: number }) {
-  return (
-    <span className={`rl ${className}`} aria-hidden>
-      {Array.from(text).map((ch, i) => (
-        <span key={i} className="lt" style={{ animationDelay: `${(start + i * step).toFixed(3)}s` }}>
-          {ch === " " ? "\u00a0" : ch}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 export default function Landing() {
   return (
     <main className="land">
       <section className="land-hero">
-        <h1 className="reveal" aria-label="מתמונה, הדמיה או תוכנית לסרטונים שמוכרים.">
-          <Letters className="h1-lead" text="מתמונה, הדמיה או תוכנית" start={0.3} step={0.022} />
-          <Letters className="h1-hand" text="לסרטונים שמוכרים." start={0.62} step={0.035} />
+        <h1 className="reveal">
+          <span className="h1-lead rise" style={{ animationDelay: "0.3s" }}>מתמונה, הדמיה או תוכנית</span>
+          <span className="h1-hand rise" style={{ animationDelay: "0.5s" }}>לסרטונים שמוכרים.</span>
         </h1>
-        <p className="rise" style={{ animationDelay: "1.35s" }}>
+        <p className="rise" style={{ animationDelay: "0.7s" }}>
           תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם ובלי עורך, וגם לנכס שעוד לא נבנה.
         </p>
-        <div className="land-cta rise" style={{ animationDelay: "1.5s" }}>
-          <Link className="btn btn-primary" href="/projects">
+        <div className="land-cta rise" style={{ animationDelay: "0.85s" }}>
+          <Link className="btn btn-primary btn-breathe" href="/projects">
             התחילו בחינם
           </Link>
         </div>
       </section>
 
-      <section className="land-video rise" style={{ animationDelay: "1.65s" }} aria-label="מתמונה לסרטון">
+      <section className="land-video rise" style={{ animationDelay: "1s" }} aria-label="מתמונה לסרטון">
         <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
         <p className="fine">
           תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}

@@ -5733,3 +5733,55 @@ body:has(.land) .nav-links > *:nth-child(3) {
 .h1-hand {
   font-size: clamp(36px, 10vw, 112px);
 }
+
+.land-hero .h1-lead,
+.land-hero .h1-hand {
+  display: block;
+}
+
+/* the main button breathes, and a shine passes over it now and then */
+.btn-breathe {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  animation: breathe 3.2s ease-in-out 1.6s infinite;
+}
+
+.btn-breathe::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: shine 4.8s ease-in-out 2.2s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  28%,
+  100% {
+    transform: translateX(360%) skewX(-18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-breathe,
+  .btn-breathe::after {
+    animation: none;
+  }
+}
