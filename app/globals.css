@@ -5785,3 +5785,45 @@ body:has(.land) .nav-links > *:nth-child(3) {
     animation: none;
   }
 }
+
+/* one rhythm: the offer line and the button breathe together, the shine passes at the top of every other breath */
+.h1-pulse {
+  animation:
+    rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s both,
+    breathe-soft 3.2s ease-in-out 1.6s infinite;
+}
+
+@keyframes breathe-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+.btn-breathe {
+  animation: breathe 3.2s ease-in-out 1.6s infinite;
+}
+
+.btn-breathe::after {
+  animation: shine 6.4s ease-in-out 1.6s infinite;
+}
+
+@keyframes shine {
+  0%,
+  12% {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  38%,
+  100% {
+    transform: translateX(360%) skewX(-18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .h1-pulse {
+    animation: none;
+  }
+}

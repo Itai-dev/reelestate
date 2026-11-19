@@ -41,7 +41,7 @@ export default function Landing() {
       <section className="land-hero">
         <h1 className="reveal">
           <span className="h1-lead rise" style={{ animationDelay: "0.3s" }}>מתמונה, הדמיה או תוכנית</span>
-          <span className="h1-hand rise" style={{ animationDelay: "0.5s" }}>לסרטונים שמוכרים.</span>
+          <span className="h1-hand h1-pulse">לסרטונים שמוכרים.</span>
         </h1>
         <p className="rise" style={{ animationDelay: "0.7s" }}>
           תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם ובלי עורך, וגם לנכס שעוד לא נבנה.
