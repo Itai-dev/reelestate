@@ -5011,3 +5011,80 @@ h2,
   color: var(--ink);
   text-decoration: underline;
 }
+
+/* drop zone: three photo frames that say which spaces to shoot */
+.drop-art {
+  gap: 10px;
+}
+
+.drop-art i,
+.drop-art i:nth-child(2),
+.drop-art i:nth-child(3) {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 74px;
+  height: 96px;
+  margin-top: 0;
+  border-radius: 14px;
+  background: var(--ivory);
+  border: 1px solid #ddd5c4;
+  color: var(--olive);
+  font-style: normal;
+}
+
+.drop-art i:nth-child(2) {
+  height: 108px;
+  margin-top: -6px;
+}
+
+.drop-art i .ico {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.drop-art i em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+/* rounded disclosure chevrons instead of the browser's sharp triangles */
+summary {
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary,
+.prompt summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.faq summary::after,
+.prompt summary::after {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.55;
+  transition: transform 0.25s ease;
+}
+
+details[open] > summary::after {
+  transform: rotate(180deg);
+}

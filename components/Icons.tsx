@@ -104,3 +104,25 @@ export const IconFrame = ({ w, h }: { w: number; h: number }) => {
     </svg>
   );
 };
+
+export const IconSofa = (p: P) => (
+  <S {...p}>
+    <path d="M5 11V8.5A2.5 2.5 0 0 1 7.5 6h9A2.5 2.5 0 0 1 19 8.5V11" />
+    <path d="M3.5 12.5a1.5 1.5 0 0 1 3 0V14h11v-1.5a1.5 1.5 0 0 1 3 0V17a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z" />
+    <path d="M6 18v1.5M18 18v1.5" />
+  </S>
+);
+
+export const IconKitchen = (p: P) => (
+  <S {...p}>
+    <path d="M5 11h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+    <path d="M3 11h18M7.5 11a4.5 4.5 0 0 1 9 0M12 6.5V5" />
+  </S>
+);
+
+export const IconBed = (p: P) => (
+  <S {...p}>
+    <path d="M3.5 18.5V7M3.5 15h17v3.5M20.5 15v-2.5A2.5 2.5 0 0 0 18 10h-7v5" />
+    <circle cx="7.3" cy="11.6" r="1.6" />
+  </S>
+);

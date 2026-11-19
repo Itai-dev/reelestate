@@ -1,19 +1,21 @@
-// The Reel Estate mark: two stacked story frames, the front one with a play cut.
+// The Reel Estate mark: one story frame with a spark cut out of it.
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden className="logo-mark">
       <defs>
-        <mask id="re-mark">
+        <mask id="re-spark">
           <rect width="24" height="24" fill="#fff" />
-          <rect x="1.6" y="5.6" width="14.8" height="18.8" rx="3" fill="#000" />
-        </mask>
-        <mask id="re-play">
-          <rect width="24" height="24" fill="#fff" />
-          <path d="M7.2 12.3v5.4l4.1-2.7z" fill="#000" stroke="#000" strokeWidth="1.7" strokeLinejoin="round" />
+          <path
+            transform="translate(5.675 6.225) scale(0.55)"
+            d="M12 2.5c.6 4.6 2.9 6.9 7.5 7.5v1c-4.6.6-6.9 2.9-7.5 7.5h-1c-.6-4.6-2.9-6.9-7.5-7.5v-1c4.6-.6 6.9-2.9 7.5-7.5z"
+            fill="#000"
+            stroke="#000"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
         </mask>
       </defs>
-      <rect x="8.8" y="1" width="12.6" height="17" rx="2.2" fill="currentColor" mask="url(#re-mark)" />
-      <rect x="3" y="7" width="12" height="16" rx="2.2" fill="currentColor" mask="url(#re-play)" />
+      <rect x="5" y="1.5" width="14" height="21" rx="3.4" fill="currentColor" mask="url(#re-spark)" />
     </svg>
   );
 }

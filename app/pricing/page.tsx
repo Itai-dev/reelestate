@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CREDITS_PER_CLIP, CREDITS_PER_EDIT, CREDITS_PER_RENDER, CREDITS_PER_REEL, PACKS, PLANS, ils, type PackId, type PlanId } from "@/lib/plans";
+import { CREDITS_PER_CLIP, CREDITS_PER_REEL, PACKS, PLANS, ils, type PackId, type PlanId } from "@/lib/plans";
 import { QUALITIES, type Quality } from "@/lib/presets";
 import { authConfigured, currentUser, ensureProfile } from "@/lib/supabase";
 
@@ -96,20 +96,6 @@ export default async function PricingPage() {
                 <td>{CREDITS_PER_CLIP[QUALITIES[q].model]}</td>
               </tr>
             ))}
-            <tr>
-              <td className="cell-start">
-                <b>שינוי בקליפ</b>
-              </td>
-              <td>שינוי אחד בשורת &quot;מה לשנות?&quot;, למשל שקיעה או ריהוט</td>
-              <td>{CREDITS_PER_EDIT.edit720}</td>
-            </tr>
-            <tr>
-              <td className="cell-start">
-                <b>הדמיה מתוכנית</b>
-              </td>
-              <td>תמונה של חלל לנכס שעוד אין לו צילומים</td>
-              <td>{CREDITS_PER_RENDER}</td>
-            </tr>
           </tbody>
         </table>
         <p className="fine">קליפ שנכשל לא יורד מהיתרה: הקרדיטים חוזרים אוטומטית.</p>

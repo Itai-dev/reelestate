@@ -44,7 +44,7 @@ import ShotCard from "./ShotCard";
 import ShotSheet from "./ShotSheet";
 import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
-import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark } from "./Icons";
+import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconSofa, IconKitchen, IconBed } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
 import RenderSheet from "./RenderSheet";
@@ -863,9 +863,18 @@ export default function Studio() {
                 <div className="start">
                   <div className={`drop-empty${drag ? " is-drag" : ""}`} {...dropProps} onClick={() => fileInput.current?.click()} role="button" tabIndex={0}>
                     <span className="drop-art" aria-hidden>
-                      <i />
-                      <i />
-                      <i />
+                      <i>
+                        <IconSofa />
+                        <em>סלון</em>
+                      </i>
+                      <i>
+                        <IconKitchen />
+                        <em>מטבח</em>
+                      </i>
+                      <i>
+                        <IconBed />
+                        <em>חדר שינה</em>
+                      </i>
                     </span>
                     <span className="drop-title">גררו לכאן תמונות של הנכס</span>
                     <span className="drop-sub">או לחצו כדי לבחור מהמכשיר. 4 עד 10 תמונות יוצרות רילס של 20–40 שניות.</span>
