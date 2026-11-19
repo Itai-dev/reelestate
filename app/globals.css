@@ -6273,3 +6273,26 @@ body:has(.land) .nav-links > *:nth-child(3) {
     min-height: 120px;
   }
 }
+
+/* the glow rises behind the prompt, like a sunrise under it */
+.land-hero::before {
+  height: 100%;
+  background:
+    radial-gradient(ellipse 34% 42% at 24% 82%, #4f5bd5 0%, transparent 70%),
+    radial-gradient(ellipse 36% 48% at 42% 80%, #962fbf 0%, transparent 72%),
+    radial-gradient(ellipse 36% 50% at 58% 80%, #d62976 0%, transparent 72%),
+    radial-gradient(ellipse 34% 46% at 75% 82%, #fa7e1e 0%, transparent 70%),
+    radial-gradient(ellipse 26% 34% at 88% 88%, #feda75 0%, transparent 70%);
+  filter: blur(50px) saturate(1.15);
+  opacity: 0.85;
+}
+
+@media (max-width: 759px) {
+  .land-hero::before {
+    background:
+      radial-gradient(ellipse 60% 34% at 15% 78%, #4f5bd5 0%, transparent 70%),
+      radial-gradient(ellipse 60% 38% at 40% 76%, #962fbf 0%, transparent 72%),
+      radial-gradient(ellipse 60% 38% at 62% 78%, #d62976 0%, transparent 72%),
+      radial-gradient(ellipse 60% 34% at 88% 80%, #fa7e1e 0%, transparent 70%);
+  }
+}
