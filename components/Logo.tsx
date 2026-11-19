@@ -29,19 +29,19 @@ export default function Logo({ size = 34 }: { size?: number }) {
   );
 }
 
-// "Reel Estate" drawn as one connected monoline: R flows into ee, t's bar into s, a into t, t into e.
+// "Reel Estate" as a connected geometric monoline: R flows into ee, the t's bar becomes the top of the s, a into t, t into e.
 export function Wordmark() {
   return (
     <svg className="logo-word-svg" viewBox="-3 3 218 42" role="img" aria-label="Reel Estate">
-      <g fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 40V9H11A8.5 8.5 0 0 1 11 26H2M11 26C15 33 17 40 21 40C24.5 40 25 30 27 30H47A10 10 0 1 0 45.66 35C48 33.2 48 30 50 30H70A10 10 0 1 0 68.66 35" />
-        <path d="M78 6V33Q78 40 84 40" />
-        <path d="M115 9H101V40H115M101 24.5H112" />
-        <path d="M149 21H133C129 21 125.5 19.6 122.6 21.2C119.4 23 120.4 27.6 126.5 29.3C132 30.8 133.6 34 131.6 37.5C129.2 41.6 122 40.6 120 37" />
-        <path d="M142 12V34Q142 40 148 40C151 40 151 36 151 30A10 10 0 1 1 151 30.01" />
-        <path d="M171 21V40" />
-        <path d="M171 21H186" />
-        <path d="M179 12V34Q179 40 185 40C188 40 188 30 190 30H210A10 10 0 1 0 208.66 35" />
+      <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 40V9H10A8 8 0 0 1 10 25H2M10 25C13.5 31 15.5 40 19.5 40C22.5 40 23 29 25 29H47A11 11 0 1 0 45.5 34.5C47.5 33 47 29 49 29H71A11 11 0 1 0 69.5 34.5" />
+        <path d="M79 6V34A6 6 0 0 0 85 40" />
+        <path d="M115 9H100V40H115M100 24.5H112" />
+        <path d="M143 18H125.5A5.5 5.5 0 0 0 125.5 29A5.5 5.5 0 0 1 125.5 40H120" />
+        <path d="M137 11V34A6 6 0 0 0 143 40C145.5 40 147 35 147 29A11 11 0 1 1 147 29.01" />
+        <path d="M169 18V40" />
+        <path d="M169 18H183" />
+        <path d="M177 11V34A6 6 0 0 0 183 40C185.5 40 186 29 188 29H210A11 11 0 1 0 208.5 34.5" />
       </g>
     </svg>
   );
