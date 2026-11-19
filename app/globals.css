@@ -6768,3 +6768,7 @@ body:has(.auth) .site-foot {
     inset-inline-start: auto;
   }
 }
+
+.auth-logo .logo {
+  color: #fff;
+}
