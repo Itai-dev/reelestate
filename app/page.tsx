@@ -53,7 +53,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="land-video rise" style={{ animationDelay: "1s" }} aria-label="מתמונה לסרטון">
+      <section className="land-video rise" style={{ animationDelay: "0.85s" }} aria-label="מתמונה לסרטון">
         <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
         <p className="fine">
           תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}
