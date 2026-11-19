@@ -38,7 +38,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </section>
       <section className="auth-media" aria-hidden>
         <AuthReel clips={CLIPS} />
-        <p className="auth-tag">סרטוני נדל״ן שמוכרים.</p>
       </section>
     </main>
   );
