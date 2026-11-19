@@ -4,7 +4,7 @@ import LoopVideo from "@/components/LoopVideo";
 import PhoneDemo from "@/components/PhoneDemo";
 
 export const metadata: Metadata = {
-  title: "Reel Estate — מתמונה של הנכס ל-Reel ממותג",
+  title: "Reel Estate — מתמונה של הנכס למודעות שמוכרות",
   description: "מעלים תמונות או תוכנית, מדביקים לינק לאתר, ומקבלים Reel לנכס בשפה של המותג. שינויים בשורה אחת, גם בקול.",
 };
 
@@ -39,18 +39,25 @@ export default function Landing() {
   return (
     <main className="land">
       <section className="land-hero">
-        <h1>מתמונה של הנכס לReels שמוכרים</h1>
-        <p>
-          בשפה של המותג שלכם, לסוכנים, למשרדי תיווך וליזמים. בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
+        <h1 className="reveal">
+          <span className="rl">
+            <span className="h1-lead">מתמונה של הנכס</span>
+          </span>
+          <span className="rl">
+            <span className="h1-hero">למודעות שמוכרות</span>
+          </span>
+        </h1>
+        <p className="rise" style={{ animationDelay: "0.75s" }}>
+          תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם וידאו ובלי עורך: התמונות שכבר צילמתם מספיקות.
         </p>
-        <div className="land-cta">
+        <div className="land-cta rise" style={{ animationDelay: "0.9s" }}>
           <Link className="btn btn-primary" href="/projects">
             התחילו בחינם
           </Link>
         </div>
       </section>
 
-      <section className="land-video" aria-label="מתמונה לסרטון">
+      <section className="land-video rise" style={{ animationDelay: "1.05s" }} aria-label="מתמונה לסרטון">
         <PhoneDemo photo="/media/demo-photo.jpg" video="/clips/1e4754a1-3d46-4230-bf0c-5e5036db99b7.mp4" />
         <p className="fine">
           תמונה אחת, סרטון אחד, תוך כמה דקות.{" "}

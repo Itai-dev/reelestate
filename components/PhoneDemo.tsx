@@ -56,7 +56,38 @@ export default function PhoneDemo({ photo, video }: { photo: string; video: stri
     return () => clearInterval(t);
   }, [phase]);
 
+  // desktop: the phone leans toward the pointer
+  const tilt = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = tilt.current;
+    if (!el) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+    const onMove = (e: PointerEvent) => {
+      tx = (e.clientX / window.innerWidth - 0.5) * 2;
+      ty = (e.clientY / window.innerHeight - 0.5) * 2;
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const step = () => {
+      x += (tx - x) * 0.08;
+      y += (ty - y) * 0.08;
+      el.style.setProperty("--ry", `${(x * 16).toFixed(2)}deg`);
+      el.style.setProperty("--rx", `${(-y * 12).toFixed(2)}deg`);
+      el.style.setProperty("--gx", `${(50 + x * 40).toFixed(1)}%`);
+      el.style.setProperty("--gy", `${(30 + y * 30).toFixed(1)}%`);
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
+    <div className="pd-stage">
+    <div className="pd-3d" ref={tilt}>
     <div className="pd" ref={box} data-phase={phase}>
       <div className="pd-screen">
         <div className="pd-drop" aria-hidden>
@@ -88,7 +119,11 @@ export default function PhoneDemo({ photo, video }: { photo: string; video: stri
         <span className="pd-chip" aria-hidden>
           {phase === "video" ? "הסרטון" : "התמונה"}
         </span>
+        <span className="pd-glare" aria-hidden />
       </div>
+    </div>
+    </div>
+    <span className="pd-floor" aria-hidden />
     </div>
   );
 }
