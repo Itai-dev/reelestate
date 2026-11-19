@@ -4,7 +4,7 @@ import LoopVideo from "@/components/LoopVideo";
 import HeroPrompt from "@/components/HeroPrompt";
 
 export const metadata: Metadata = {
-  title: "Reel Estate — מתמונה, הדמיה או תוכנית לסרטונים שמוכרים",
+  title: "Reel Estate — סרטונים שמוכרים, מתמונה, הדמיה או תוכנית",
   description: "מעלים תמונות או תוכנית, מדביקים לינק לאתר, ומקבלים Reel לנכס בשפה של המותג. שינויים בשורה אחת, גם בקול.",
 };
 
@@ -40,13 +40,12 @@ export default function Landing() {
     <main className="land">
       <section className="land-hero">
         <h1 className="reveal">
-          <span className="h1-lead rise" style={{ animationDelay: "0.3s" }}>מתמונה, הדמיה או תוכנית</span>
-          <span className="h1-hand h1-pulse">לסרטונים שמוכרים.</span>
+          <span className="h1-hand h1-pulse">סרטונים שמוכרים.</span>
         </h1>
-        <p className="rise" style={{ animationDelay: "0.7s" }}>
-          תוך דקות, לא תוך שבוע. בשפה של המותג שלכם, בלי צלם ובלי עורך, וגם לנכס שעוד לא נבנה.
+        <p className="rise land-sub" style={{ animationDelay: "0.65s" }}>
+          מתמונה, הדמיה או תוכנית לסרטון ממותג של הנכס, תוך דקות.
         </p>
-        <div className="rise" style={{ animationDelay: "0.85s" }}>
+        <div className="rise hp-wrap" style={{ animationDelay: "0.8s" }}>
           <HeroPrompt />
         </div>
       </section>

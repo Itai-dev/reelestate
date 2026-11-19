@@ -5,6 +5,13 @@ export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden className="logo-mark">
       <defs>
+        <linearGradient id="re-ig" x1="2" y1="24" x2="22" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#feda75" />
+          <stop offset="0.28" stopColor="#fa7e1e" />
+          <stop offset="0.55" stopColor="#d62976" />
+          <stop offset="0.78" stopColor="#962fbf" />
+          <stop offset="1" stopColor="#4f5bd5" />
+        </linearGradient>
         <mask id="re-back">
           <rect width="24" height="24" fill="#fff" />
           <rect x="5.95" y="0.35" width="14.7" height="20.7" rx="3.45" fill="#000" />
@@ -14,8 +21,8 @@ export function LogoMark({ size = 34 }: { size?: number }) {
           <path transform="translate(6.86 4.82) scale(0.56)" d={SPARK} fill="#000" />
         </mask>
       </defs>
-      <rect x="4.2" y="3.8" width="13" height="19" rx="2.6" fill="currentColor" mask="url(#re-back)" />
-      <rect x="6.8" y="1.2" width="13" height="19" rx="2.6" fill="currentColor" mask="url(#re-spark)" />
+      <rect x="4.2" y="3.8" width="13" height="19" rx="2.6" fill="url(#re-ig)" mask="url(#re-back)" />
+      <rect x="6.8" y="1.2" width="13" height="19" rx="2.6" fill="url(#re-ig)" mask="url(#re-spark)" />
     </svg>
   );
 }

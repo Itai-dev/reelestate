@@ -6159,3 +6159,117 @@ body:has(.land) .nav-links > *:nth-child(3) {
     animation: none;
   }
 }
+
+/* ---------- landing hero, Lovable proportions, Instagram glow rising from the bottom ---------- */
+:root {
+  --ig: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+}
+
+.land-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100svh - 72px);
+  align-content: center;
+  gap: 18px;
+  padding: 40px 0 120px;
+}
+
+.land-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: 0;
+  width: 100vw;
+  height: 78%;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 38% 55% at 22% 100%, #4f5bd5 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 42% 100%, #962fbf 0%, transparent 72%),
+    radial-gradient(ellipse 40% 62% at 60% 100%, #d62976 0%, transparent 72%),
+    radial-gradient(ellipse 38% 58% at 78% 100%, #fa7e1e 0%, transparent 70%),
+    radial-gradient(ellipse 30% 40% at 92% 100%, #feda75 0%, transparent 70%);
+  filter: blur(40px) saturate(1.1);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* fade the glow into the page below */
+.land-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -1px;
+  width: 100vw;
+  height: 90px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+}
+
+.land-hero h1 .h1-hand {
+  font-size: clamp(44px, 7vw, 84px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.land-sub {
+  font-size: clamp(17px, 1.6vw, 20px) !important;
+  max-width: 52ch !important;
+  color: var(--mute);
+}
+
+.hp-wrap {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  margin-top: 18px;
+}
+
+.hp {
+  width: min(100%, 768px);
+}
+
+.hp-box {
+  min-height: 140px;
+  padding: 18px 18px 14px;
+  border: 0;
+  border-radius: 28px;
+  background: rgba(255, 253, 249, 0.96);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 30px 80px rgba(80, 30, 60, 0.22);
+}
+
+.hp-box:focus-within,
+.hp-box.is-drag {
+  box-shadow:
+    0 0 0 2px rgba(29, 28, 25, 0.85),
+    0 30px 80px rgba(80, 30, 60, 0.26);
+}
+
+.hp-send {
+  background: var(--ig);
+}
+
+.hp-ideas button {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--ink);
+  backdrop-filter: blur(8px);
+}
+
+.hp-ideas button:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 759px) {
+  .land-hero {
+    min-height: calc(100svh - 64px);
+    padding-bottom: 90px;
+  }
+  .hp-box {
+    min-height: 120px;
+  }
+}
