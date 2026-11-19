@@ -6476,3 +6476,62 @@ body {
   z-index: 1;
   margin-top: -40px;
 }
+
+/* single frame mark, sized to its own width */
+.logo {
+  gap: 8px;
+}
+
+.logo-mark,
+.nav-brand svg.logo-mark {
+  width: 22px;
+  height: 33px;
+  margin-block: -4px;
+}
+
+.foot-logo .logo-mark {
+  width: 17px;
+  height: 26px;
+  margin-block: 0;
+}
+
+@media (max-width: 759px) {
+  .logo-mark,
+  .nav-brand svg.logo-mark {
+    width: 19px;
+    height: 29px;
+  }
+}
+
+/* hero glow: round again, softer, a long fade, still grounded under the prompt and the reels */
+.land-hero::before {
+  top: 30%;
+  bottom: -460px;
+  background:
+    radial-gradient(ellipse 30% 34% at 26% 56%, #4f5bd5 0%, transparent 70%),
+    radial-gradient(ellipse 32% 38% at 42% 54%, #962fbf 0%, transparent 72%),
+    radial-gradient(ellipse 32% 38% at 58% 54%, #d62976 0%, transparent 72%),
+    radial-gradient(ellipse 30% 34% at 74% 56%, #fa7e1e 0%, transparent 70%),
+    radial-gradient(ellipse 22% 26% at 86% 60%, #feda75 0%, transparent 70%);
+  filter: blur(60px) saturate(1.05);
+  -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 55%, #000 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 50% at 50% 55%, #000 30%, transparent 100%);
+}
+
+@keyframes glow-in {
+  to {
+    opacity: 0.62;
+  }
+}
+
+@media (max-width: 759px) {
+  .land-hero::before {
+    background:
+      radial-gradient(ellipse 55% 32% at 18% 55%, #4f5bd5 0%, transparent 70%),
+      radial-gradient(ellipse 55% 34% at 40% 53%, #962fbf 0%, transparent 72%),
+      radial-gradient(ellipse 55% 34% at 62% 53%, #d62976 0%, transparent 72%),
+      radial-gradient(ellipse 55% 32% at 85% 55%, #fa7e1e 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 50% at 50% 55%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(ellipse 90% 50% at 50% 55%, #000 30%, transparent 100%);
+  }
+}
