@@ -5968,3 +5968,9 @@ body:has(.land) .nav-links > *:nth-child(3) {
     animation: none;
   }
 }
+
+/* the account menu must sit above the page */
+.nav {
+  position: relative;
+  z-index: 40;
+}
