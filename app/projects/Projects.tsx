@@ -71,6 +71,9 @@ export default function Projects() {
             </button>
           </p>
         </div>
+        <Link className="btn btn-primary" href="/studio?new=1">
+          <IconPlus /> פרויקט חדש
+        </Link>
       </header>
       {error && <p className="error-inline">{error}</p>}
       {items === null ? (
@@ -78,19 +81,9 @@ export default function Projects() {
       ) : items.length === 0 ? (
         <div className="block empty-block">
           <p>עוד אין פרויקטים. כל פרויקט שתפתחו יישמר כאן אוטומטית.</p>
-          <Link className="btn btn-primary" href="/studio?new=1">
-            <IconPlus /> פרויקט חדש
-          </Link>
         </div>
       ) : (
         <div className="projects">
-          <Link href="/studio?new=1" className="project project-new">
-            <span className="project-cover">
-              <IconPlus />
-            </span>
-            <b>פרויקט חדש</b>
-            <small>מתמונות או מתוכנית</small>
-          </Link>
           {items.map((p) => {
             const shots = ((p.data as { shots?: unknown[] }).shots ?? []).length;
             return (
