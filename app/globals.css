@@ -5660,3 +5660,14 @@ details[open] > summary::after {
   font-weight: 700;
   letter-spacing: -0.035em;
 }
+
+/* the offer in plain bold */
+.h1-hand {
+  font-family: "Heebo", sans-serif;
+  font-weight: 800;
+  font-size: clamp(44px, 11vw, 112px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+}
