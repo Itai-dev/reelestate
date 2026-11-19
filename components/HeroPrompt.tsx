@@ -95,7 +95,14 @@ export default function HeroPrompt() {
       </form>
       <div className="hp-ideas">
         {IDEAS.map((t) => (
-          <button key={t} type="button" onClick={() => setText(t)}>
+          <button
+            key={t}
+            type="button"
+            onClick={() => {
+              setText(t);
+              area.current?.focus();
+            }}
+          >
             {t}
           </button>
         ))}
