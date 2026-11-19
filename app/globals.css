@@ -5640,3 +5640,16 @@ details[open] > summary::after {
 .h1-hand {
   color: var(--ink);
 }
+
+.nav-brand svg.logo-word-svg {
+  display: block;
+  width: auto;
+  height: 24px;
+  fill: none;
+}
+
+@media (max-width: 759px) {
+  .nav-brand svg.logo-word-svg {
+    height: 20px;
+  }
+}
