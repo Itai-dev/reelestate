@@ -6772,3 +6772,103 @@ body:has(.auth) .site-foot {
 .auth-logo .logo {
   color: #fff;
 }
+
+/* ---------- image ads ---------- */
+.ads-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--hair);
+  border-radius: 18px;
+  background: var(--ivory);
+  color: var(--ink);
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.ads-entry:hover {
+  border-color: var(--ink);
+}
+
+.ads-entry-thumbs {
+  display: flex;
+  flex: none;
+}
+
+.ads-entry-thumbs img {
+  width: 34px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 7px;
+  border: 2px solid var(--ivory);
+  margin-inline-start: -10px;
+}
+
+.ads-entry-thumbs img:first-child {
+  margin-inline-start: 0;
+}
+
+.ads-entry-text {
+  display: grid;
+  gap: 2px;
+}
+
+.ads-entry-text small {
+  color: var(--mute);
+}
+
+.ads-format {
+  margin: 14px 0 16px;
+}
+
+.ads-wait {
+  color: var(--mute);
+}
+
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.ads-grid.ads-9x16 {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.ads-grid figure {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ads-grid img {
+  width: 100%;
+  border-radius: 12px;
+  background: var(--soft);
+  box-shadow: 0 6px 18px rgba(40, 36, 20, 0.12);
+}
+
+.ads-grid figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--mute);
+}
+
+.ads-grid figcaption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ads-grid figcaption a {
+  color: var(--ink);
+  font-weight: 600;
+  flex: none;
+}

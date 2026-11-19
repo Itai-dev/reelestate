@@ -39,6 +39,7 @@ export type ReelSpec = {
   clipSeconds: number;
   look?: ReelLook;
   textStyle?: "bold" | "calm";
+  stills?: boolean; // draw photos unmoved, for image ads
 };
 
 export const FONT_DISPLAY = '"Bellefair", "Frank Ruhl Libre", serif';
@@ -168,6 +169,7 @@ export class Reel {
   private drawMedia(seg: Seg, local: number, x: number, y: number, w: number, h: number, still = false) {
     const { ctx } = this;
     const { photo, video, motion } = seg.clip;
+    if (this.spec.stills) still = true;
     ctx.save();
     ctx.beginPath();
     ctx.rect(x, y, w, h);
@@ -780,4 +782,20 @@ export function canRecord() {
     typeof MediaRecorder !== "undefined" &&
     typeof (HTMLCanvasElement.prototype as unknown as { captureStream?: unknown }).captureStream === "function"
   );
+}
+
+// Image ads from the same project: the cover with the hook, one per space with its line, and the end card.
+export type Still = { kind: "cover" | "space" | "end"; label: string; t: number };
+
+export function stillTimes(reel: Reel): Still[] {
+  const out: Still[] = [{ kind: "cover", label: "פתיחה", t: Math.min(1.8, reel.endStart - 0.2) }];
+  reel.segs.forEach((seg, i) => {
+    if (!(seg.clip.caption || seg.clip.label)) return;
+    const from = i === 0 ? Math.max(seg.start + 0.45, INTRO_END + 0.05) : seg.start + 0.45;
+    const to = seg.start + seg.len - 0.3;
+    if (to - from < 0.7) return;
+    out.push({ kind: "space", label: seg.clip.caption || seg.clip.label, t: (from + to) / 2 });
+  });
+  out.push({ kind: "end", label: "סיום", t: reel.total - 0.05 });
+  return out;
 }

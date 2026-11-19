@@ -44,6 +44,7 @@ import ShotCard from "./ShotCard";
 import ShotSheet from "./ShotSheet";
 import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
+import AdsSheet from "./AdsSheet";
 import { takeHandoff } from "@/lib/handoff";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor } from "./Icons";
 import { statusLine } from "./ShotCard";
@@ -119,6 +120,7 @@ export default function Studio() {
   const [changes, setChanges] = useState<Change[]>([]);
   const [renderOpen, setRenderOpen] = useState(false);
   const [renderBrief, setRenderBrief] = useState("");
+  const [adsOpen, setAdsOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -1078,6 +1080,19 @@ export default function Studio() {
                     <ChangeBar busy={false} disabled={locked} log={changes} onSend={runChange} onUndo={undoChange} />
                   )}
 
+                  <button type="button" className="ads-entry" onClick={() => setAdsOpen(true)} disabled={!shots.length}>
+                    <span className="ads-entry-thumbs" aria-hidden>
+                      {shots.slice(0, 3).map((s) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={s.id} src={media[s.id]?.img} alt="" />
+                      ))}
+                    </span>
+                    <span className="ads-entry-text">
+                      <b>גם מודעות תמונה</b>
+                      <small>אותו מיתוג וטקסטים, לפיד, לסטורי ולמודעות. בלי עלות נוספת.</small>
+                    </span>
+                  </button>
+
                   <div className="block texts">
                     <h2>טקסט על הסרטון</h2>
                     <p className="block-sub">משפט פתיחה שעוצר גלילה, שורה אחת לכל חלל, וקריאה לפעולה בסוף.</p>
@@ -1339,6 +1354,17 @@ export default function Studio() {
         costLine={accounts ? `{n} קרדיטים (${CREDITS_PER_RENDER} להדמיה)` : `כ-$${RENDERS.render.pricePerImage.toFixed(2)} להדמיה`}
         onAdd={addRender}
         initialBrief={renderBrief}
+      />
+
+      <AdsSheet
+        open={adsOpen}
+        onClose={() => setAdsOpen(false)}
+        shots={shots}
+        imageBlob={(id) => blobs.current.get(id)}
+        info={info}
+        settings={settings}
+        logo={logo?.blob}
+        brand={brand}
       />
 
       {player && (
