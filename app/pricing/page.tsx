@@ -101,7 +101,7 @@ export default async function PricingPage() {
         <p className="fine">קליפ שנכשל לא יורד מהיתרה: הקרדיטים חוזרים אוטומטית.</p>
       </section>
 
-      <section className="faq" aria-labelledby="faq-title">
+      <section className="faq" id="faq" aria-labelledby="faq-title">
         <h2 id="faq-title">שאלות</h2>
         <details>
           <summary>מה קורה לקרדיטים שלא השתמשתי בהם?</summary>
