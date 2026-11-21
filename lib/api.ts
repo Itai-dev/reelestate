@@ -1,4 +1,4 @@
-import type { EditKey, ModelKey } from "./presets";
+import type { EditKey, ModelKey, TourKey } from "./presets";
 
 const PW_KEY = "reel-estate:pw";
 
@@ -45,11 +45,11 @@ export async function uploadImage(blob: Blob): Promise<string> {
   return (await json<{ url: string }>(r)).url;
 }
 
-export async function startGeneration(model: ModelKey, imageUrl: string, prompt: string): Promise<string> {
+export async function startGeneration(model: ModelKey, imageUrl: string, prompt: string, endImageUrl?: string): Promise<string> {
   const r = await fetch("/api/generate", {
     method: "POST",
     headers: { "content-type": "application/json", ...headers() },
-    body: JSON.stringify({ model, imageUrl, prompt }),
+    body: JSON.stringify({ model, imageUrl, prompt, endImageUrl }),
   });
   return (await json<{ requestId: string }>(r)).requestId;
 }
@@ -60,7 +60,7 @@ export type GenStatus =
   | { status: "done"; videoUrl: string }
   | { status: "error"; error: string; refunded?: boolean };
 
-export async function checkGeneration(model: ModelKey | EditKey | "render" | "renderText", id: string): Promise<GenStatus> {
+export async function checkGeneration(model: ModelKey | EditKey | "render" | "renderText" | TourKey, id: string): Promise<GenStatus> {
   const q = new URLSearchParams({ model, id });
   const r = await fetch(`/api/status?${q}`, { headers: headers() });
   return json<GenStatus>(r);
@@ -133,5 +133,12 @@ export async function readPlan(body: { plan?: string; refs: string[]; brief: str
 
 export async function startRender(prompt: string, refs: string[], aspect: string): Promise<{ requestId: string; model: "render" | "renderText" }> {
   const r = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ prompt, refs, aspect }) });
+  return json(r);
+}
+
+// One image of the interactive tour: a 360° panorama from a photo, a relit copy
+// of a panorama, or the close view the camera approach ends on.
+export async function startTourImage(body: { kind: TourKey; imageUrl: string; room?: string; light?: string; style?: string }): Promise<{ requestId: string; model: TourKey }> {
+  const r = await fetch("/api/tour", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify(body) });
   return json(r);
 }

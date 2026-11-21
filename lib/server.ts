@@ -1,5 +1,5 @@
 import { createFalClient } from "@fal-ai/client";
-import { EDITS, MODELS, NEGATIVE_PROMPT, RENDERS, type EditKey, type ModelKey, type RenderKey } from "./presets";
+import { EDITS, MODELS, NEGATIVE_PROMPT, RENDERS, TOUR_IMAGES, type EditKey, type ModelKey, type RenderKey, type TourKey } from "./presets";
 
 export type Mode = "live" | "demo" | "mock";
 
@@ -33,9 +33,11 @@ export function isEditKey(v: unknown): v is EditKey {
 }
 
 export const isRenderKey = (v: unknown): v is RenderKey => typeof v === "string" && v in RENDERS;
-export type JobKey = ModelKey | EditKey | RenderKey;
-export const isJobKey = (v: unknown): v is JobKey => isModelKey(v) || isEditKey(v) || isRenderKey(v);
-export const jobEndpoint = (k: JobKey) => (isEditKey(k) ? EDITS[k].endpoint : isRenderKey(k) ? RENDERS[k].endpoint : MODELS[k].endpoint);
+export const isTourKey = (v: unknown): v is TourKey => typeof v === "string" && v in TOUR_IMAGES;
+export type JobKey = ModelKey | EditKey | RenderKey | TourKey;
+export const isJobKey = (v: unknown): v is JobKey => isModelKey(v) || isEditKey(v) || isRenderKey(v) || isTourKey(v);
+export const jobEndpoint = (k: JobKey) =>
+  isEditKey(k) ? EDITS[k].endpoint : isRenderKey(k) ? RENDERS[k].endpoint : isTourKey(k) ? TOUR_IMAGES[k].endpoint : MODELS[k].endpoint;
 
 // Edits only take clips that already live on fal's storage, so the key can't be used
 // to process arbitrary videos from the web.
@@ -51,12 +53,16 @@ export function isFalMediaUrl(v: unknown): v is string {
 
 // Each model names its inputs a little differently. Both get a frame that is
 // already cropped to the output format, so the aspect ratio follows the image.
-export function modelInput(key: ModelKey, imageUrl: string, prompt: string) {
+// With an end image the clip travels from the first frame to that one (the
+// tour's camera approach).
+export function modelInput(key: ModelKey, imageUrl: string, prompt: string, endImageUrl?: string) {
   const m = MODELS[key];
+  const end = endImageUrl ? { end_image_url: endImageUrl } : {};
   if (m.family === "seedance") {
     return {
       prompt,
       image_url: imageUrl,
+      ...end,
       duration: "5",
       resolution: m.resolution,
       aspect_ratio: "auto",
@@ -66,6 +72,7 @@ export function modelInput(key: ModelKey, imageUrl: string, prompt: string) {
   return {
     prompt: `${prompt} Avoid: ${NEGATIVE_PROMPT}.`,
     start_image_url: imageUrl,
+    ...end,
     duration: 5,
     resolution: m.resolution,
     aspect_ratio: "adaptive",

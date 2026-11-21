@@ -1,4 +1,4 @@
-import { errorMessage, fal, isModelKey, mode, modelInput } from "@/lib/server";
+import { errorMessage, fal, isFalMediaUrl, isModelKey, mode, modelInput } from "@/lib/server";
 import { MODELS } from "@/lib/presets";
 import { CREDITS_PER_CLIP } from "@/lib/plans";
 import { access } from "@/lib/access";
@@ -8,18 +8,24 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Charges credits, then queues one image-to-video job. Credits come back if queuing fails.
+// With endImageUrl the clip ends on that frame (the tour's camera approach).
 export async function POST(req: Request) {
   const gate = await access(req);
   if (gate instanceof Response) return gate;
   const m = mode();
   if (m === "demo") return Response.json({ error: "חסר FAL_KEY" }, { status: 400 });
 
-  const body = (await req.json().catch(() => null)) as { model?: unknown; imageUrl?: unknown; prompt?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { model?: unknown; imageUrl?: unknown; endImageUrl?: unknown; prompt?: unknown } | null;
   const model = body?.model;
   const imageUrl = body?.imageUrl;
   const prompt = typeof body?.prompt === "string" ? body.prompt.slice(0, 2000) : "";
   if (!isModelKey(model) || typeof imageUrl !== "string" || !prompt) {
     return Response.json({ error: "בקשה חסרה" }, { status: 400 });
+  }
+  let endImageUrl: string | undefined;
+  if (body?.endImageUrl != null) {
+    if (m !== "mock" && !isFalMediaUrl(body.endImageUrl)) return Response.json({ error: "בקשה חסרה" }, { status: 400 });
+    endImageUrl = String(body.endImageUrl);
   }
 
   let genId: string | null = null;
@@ -46,7 +52,7 @@ export async function POST(req: Request) {
     if (m === "mock") {
       requestId = `mock-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     } else {
-      const res = await fal().queue.submit(MODELS[model].endpoint, { input: modelInput(model, imageUrl, prompt) as never });
+      const res = await fal().queue.submit(MODELS[model].endpoint, { input: modelInput(model, imageUrl, prompt, endImageUrl) as never });
       requestId = res.request_id;
     }
   } catch (e) {

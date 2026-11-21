@@ -45,8 +45,11 @@ import ShotSheet from "./ShotSheet";
 import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
 import AdsSheet from "./AdsSheet";
+import TourSheet from "./TourSheet";
+import { useTour } from "./useTour";
+import { cloudName, localKey, tourFiles, tourKeys, type Tour } from "@/lib/tour";
 import { takeHandoff } from "@/lib/handoff";
-import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor } from "./Icons";
+import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor, IconTour } from "./Icons";
 import { statusLine } from "./ShotCard";
 import Thinking from "./Thinking";
 import RenderSheet from "./RenderSheet";
@@ -56,9 +59,18 @@ import { download as cloudDownload, getProject, getUser, saveProject, sb, signIn
 import type { User } from "@supabase/supabase-js";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
-type Files = { img: Record<string, string>; vid: Record<string, string>; vidSrc: Record<string, string>; logo?: string; music?: string };
-type Saved = { shots: Shot[]; info: Info; settings: Settings; musicName?: string; brand?: Brand | null; savedAt?: number; files?: Files };
-const NO_FILES = (): Files => ({ img: {}, vid: {}, vidSrc: {} });
+// tour: the interactive tour's files by key, and the version of each that was uploaded
+type Files = {
+  img: Record<string, string>;
+  vid: Record<string, string>;
+  vidSrc: Record<string, string>;
+  tour: Record<string, string>;
+  tourSrc: Record<string, string>;
+  logo?: string;
+  music?: string;
+};
+type Saved = { shots: Shot[]; info: Info; settings: Settings; musicName?: string; brand?: Brand | null; tour?: Tour | null; savedAt?: number; files?: Files };
+const NO_FILES = (): Files => ({ img: {}, vid: {}, vidSrc: {}, tour: {}, tourSrc: {} });
 
 // Empties the browser copy of the current project (its photos, clips, logo and music).
 async function clearLocal() {
@@ -67,6 +79,7 @@ async function clearLocal() {
     await remove(`img:${s.id}`);
     await remove(`vid:${s.id}`);
   }
+  if (saved?.tour) for (const k of tourKeys(saved.tour)) await remove(localKey(k));
   await remove("logo");
   await remove("music");
   await remove("project");
@@ -84,6 +97,12 @@ async function importCloud(c: CloudProject) {
         const v = await cloudDownload(files.vid[s.id]).catch(() => null);
         if (v) await save(`vid:${s.id}`, v);
       }
+    }),
+  );
+  await Promise.all(
+    Object.entries(files.tour).map(async ([key, path]) => {
+      const b = await cloudDownload(path).catch(() => null);
+      if (b) await save(localKey(key), b);
     }),
   );
   if (files.logo) await save("logo", await cloudDownload(files.logo).catch(() => null));
@@ -121,6 +140,7 @@ export default function Studio() {
   const [renderOpen, setRenderOpen] = useState(false);
   const [renderBrief, setRenderBrief] = useState("");
   const [adsOpen, setAdsOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -149,6 +169,30 @@ export default function Studio() {
   const pid = useRef("");
   const files = useRef<Files>(NO_FILES());
   const dirty = useRef({ logo: false, music: false });
+
+  // the interactive tour: made here so it keeps going while its sheet is closed
+  const tourApi = useTour({
+    live: config?.mode === "live" || config?.mode === "mock",
+    shots: () => shotsRef.current,
+    imageBlob: (id) => blobs.current.get(id),
+    model: () => settingsRef.current.model,
+    style: () => styleRef.current,
+    onBlocked: (code) =>
+      setNotice(
+        code === "no_credits" ? (
+          <>
+            נגמרו הקרדיטים. <Link href="/pricing">להוספת קרדיטים</Link>
+          </>
+        ) : (
+          <>
+            צריך להתחבר כדי ליצור סיור. <Link href="/login?next=/studio">התחברות</Link>
+          </>
+        ),
+      ),
+  });
+  const tour = tourApi.tour;
+  const tourRef = useRef(tour);
+  tourRef.current = tour;
 
   // ---------- load saved project (from the account when signed in) ----------
   useEffect(() => {
@@ -220,6 +264,7 @@ export default function Studio() {
         if (lg) setLogo({ blob: lg, url: URL.createObjectURL(lg) });
         const mu = await load<Blob>("music");
         if (mu) setMusic({ blob: mu, url: URL.createObjectURL(mu), name: saved.musicName ?? "מוזיקה" });
+        await tourApi.open(saved.tour);
       }
       setHydrated(true);
     })();
@@ -233,12 +278,12 @@ export default function Studio() {
   const latest = useRef<Saved | null>(null);
   useEffect(() => {
     if (!hydrated) return;
-    latest.current = { shots, info, settings, musicName: music?.name, brand, savedAt: Date.now(), files: files.current };
+    latest.current = { shots, info, settings, musicName: music?.name, brand, tour, savedAt: Date.now(), files: files.current };
     const id = setTimeout(async () => {
       if ((await load<string>("projectId")) === pid.current) save("project", latest.current);
     }, 400);
     return () => clearTimeout(id);
-  }, [hydrated, shots, info, settings, music, brand]);
+  }, [hydrated, shots, info, settings, music, brand, tour]);
   useEffect(() => {
     const flush = () => {
       if (latest.current && document.visibilityState === "hidden") save("project", latest.current);
@@ -385,6 +430,17 @@ export default function Studio() {
         const ids = new Set(shotsRef.current.map((x) => x.id));
         for (const k of Object.keys(f.img)) if (!ids.has(k)) delete f.img[k];
         for (const k of Object.keys(f.vid)) if (!ids.has(k)) (delete f.vid[k], delete f.vidSrc[k]);
+        // the tour's finished files; one that was made again is uploaded again
+        const tourNow = tourRef.current ? tourFiles(tourRef.current) : [];
+        for (const { key, v } of tourNow) {
+          if (f.tour[key] && f.tourSrc[key] === v) continue;
+          const blob = await load<Blob>(localKey(key));
+          if (!blob) continue;
+          f.tour[key] = await cloudUpload(`${base}/${cloudName(key)}`, blob);
+          f.tourSrc[key] = v;
+        }
+        const tourKept = new Set(tourNow.map((x) => x.key));
+        for (const k of Object.keys(f.tour)) if (!tourKept.has(k)) (delete f.tour[k], delete f.tourSrc[k]);
         if (logoRef.current && (dirty.current.logo || !f.logo)) {
           f.logo = await cloudUpload(`${base}/logo`, logoRef.current.blob);
           dirty.current.logo = false;
@@ -417,7 +473,7 @@ export default function Studio() {
     };
     const t = setTimeout(run, 2000);
     return () => clearTimeout(t);
-  }, [hydrated, user, shots, info, settings, brand, media, logo, music]);
+  }, [hydrated, user, shots, info, settings, brand, media, logo, music, tour]);
 
   // ---------- brand ----------
   const setLogoBlob = (blob: Blob) => {
@@ -1093,6 +1149,24 @@ export default function Studio() {
                     </span>
                   </button>
 
+                  {live && (
+                    <button type="button" className="ads-entry tour-entry" onClick={() => setTourOpen(true)} disabled={locked}>
+                      <span className="tour-entry-art" aria-hidden>
+                        <IconTour />
+                      </span>
+                      <span className="ads-entry-text">
+                        <b>גם סיור אינטראקטיבי</b>
+                        <small>
+                          {tour
+                            ? tourApi.busy
+                              ? `${tourApi.ready} מתוך ${tourApi.total} חלקים מוכנים`
+                              : `${tour.spaces.length} חללים${tour.published ? " · קישור פעיל" : ""}`
+                            : "הקונים מסתובבים בנכס: מבט 360° בכל חלל, מעבר בין חללים ותאורה מבוקר עד לילה."}
+                        </small>
+                      </span>
+                    </button>
+                  )}
+
                   <div className="block texts">
                     <h2>טקסט על הסרטון</h2>
                     <p className="block-sub">משפט פתיחה שעוצר גלילה, שורה אחת לכל חלל, וקריאה לפעולה בסוף.</p>
@@ -1365,6 +1439,21 @@ export default function Studio() {
         settings={settings}
         logo={logo?.blob}
         brand={brand}
+      />
+
+      <TourSheet
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        api={tourApi}
+        shots={shots}
+        media={media}
+        imageBlob={(id) => blobs.current.get(id)}
+        name={info.name}
+        model={settings.model}
+        accounts={accounts}
+        signedIn={signedIn}
+        balance={balance}
+        share={{ user: Boolean(user), state: cloud, link: typeof location === "undefined" ? "" : `${location.origin}/tour/${pid.current}` }}
       />
 
       {player && (
