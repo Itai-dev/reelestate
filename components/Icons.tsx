@@ -19,6 +19,14 @@ export const IconSpark = (p: P) => (
   </S>
 );
 
+// a view that goes all the way around
+export const IconTour = (p: P) => (
+  <S {...p}>
+    <ellipse cx="12" cy="12" rx="9" ry="4.2" />
+    <path d="M12 3a9 9 0 0 0 0 18M12 3a9 9 0 0 1 0 18" />
+  </S>
+);
+
 export const IconChevron = (p: P) => (
   <S {...p}>
     <path d="M14.5 6l-6 6 6 6" />

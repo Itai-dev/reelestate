@@ -27,7 +27,7 @@ export async function signOut() {
   await fetch("/auth/signout", { method: "POST" }).catch(() => {});
 }
 
-export type CloudFiles = { img: Record<string, string>; vid: Record<string, string>; logo?: string; music?: string };
+export type CloudFiles = { img: Record<string, string>; vid: Record<string, string>; tour?: Record<string, string>; logo?: string; music?: string };
 
 export type CloudProject = {
   id: string;

@@ -6960,3 +6960,752 @@ body:has(.auth) .site-foot {
     padding: 0;
   }
 }
+
+/* ---------- interactive tour: the viewer ---------- */
+
+.tv {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: size;
+  background: #101014;
+  color: #fff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tv-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+  transition: opacity 0.28s var(--out);
+}
+
+.tv-canvas:active {
+  cursor: grabbing;
+}
+
+.tv-canvas.is-veiled {
+  opacity: 0;
+}
+
+.tv-canvas:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
+.tv-pill,
+.tv-label,
+.tv-spaces button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(16, 16, 20, 0.55);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.tv-pill:hover,
+.tv-label:hover,
+.tv-spaces button:hover {
+  background: rgba(16, 16, 20, 0.82);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.tv :focus-visible {
+  outline-color: #fff;
+}
+
+/* labels: each sits on a direction of the panorama */
+.tv-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.tv-labels.is-off {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.tv-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: auto;
+  padding-inline-start: 12px;
+  will-change: transform;
+}
+
+.tv-label i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+  flex: none;
+}
+
+.tv.is-edit .tv-label {
+  border-style: dashed;
+  border-color: #fff;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tv.is-edit .tv-label:active {
+  cursor: grabbing;
+}
+
+.tv-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 34px;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+  pointer-events: none;
+}
+
+.tv-top > * {
+  pointer-events: auto;
+}
+
+.tv-title {
+  margin: 0;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.tv-title b {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.tv-title span {
+  font-size: 13.5px;
+  opacity: 0.86;
+}
+
+.tv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: none;
+  max-width: 62%;
+}
+
+.tv-icon {
+  width: 38px;
+  padding: 0;
+  justify-content: center;
+}
+
+.tv-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tv-bottom {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 44px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+.tv-bottom > * {
+  pointer-events: auto;
+}
+
+.tv-light {
+  display: grid;
+  gap: 5px;
+  width: min(100%, 340px);
+  padding: 9px 16px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  background: rgba(16, 16, 20, 0.55);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+}
+
+.tv-light label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.tv-light input {
+  width: 100%;
+  margin: 0;
+  accent-color: #fff;
+}
+
+.tv-light-names {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tv-light-names button {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: #fff;
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.tv-light-names button[aria-pressed="true"] {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.tv-spaces {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tv-spaces::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-spaces button {
+  flex: none;
+  min-height: 34px;
+  padding: 0 13px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.tv-spaces button[aria-current="true"] {
+  background: #fff;
+  border-color: #fff;
+  color: #101014;
+  font-weight: 600;
+}
+
+.tv-note {
+  margin: 0;
+  font-size: 11.5px;
+  opacity: 0.75;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.tv-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(16, 16, 20, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: tv-in 0.5s var(--out) both;
+}
+
+@keyframes tv-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tv-load {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.tv-load .spinner {
+  width: 26px;
+  height: 26px;
+}
+
+.tv-error {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  background: rgba(16, 16, 20, 0.78);
+  text-align: center;
+}
+
+.tv-error p {
+  margin: 0;
+}
+
+/* the building, before entering: the photo covers the stage and is shifted so
+   the marked apartment stays in view on narrow screens */
+.tv-entry {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  background: #101014;
+  transition: opacity 0.6s var(--out), visibility 0s;
+}
+
+.tv-entry.is-off {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.6s var(--out), visibility 0s 0.6s;
+}
+
+.tv-cover {
+  --w: max(100cqw, calc(100cqh * 16 / 9));
+  position: absolute;
+  width: var(--w);
+  aspect-ratio: 16 / 9;
+  left: clamp(calc(100cqw - var(--w)), calc(50cqw - var(--x) * var(--w)), 0px);
+  top: clamp(calc(100cqh - var(--w) * 9 / 16), calc(50cqh - var(--y) * var(--w) * 9 / 16), 0px);
+}
+
+.tv-cover img,
+.tv-cover video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tv-cover video {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.tv-cover video.is-on {
+  opacity: 1;
+}
+
+.tv-marker {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.tv-marker i {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.35), 0 4px 18px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s var(--out);
+}
+
+.tv-marker:hover i {
+  transform: scale(1.15);
+}
+
+.tv-marker i::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  animation: tv-ping 2s var(--out) infinite;
+}
+
+@keyframes tv-ping {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.tv-marker span {
+  position: absolute;
+  top: 100%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(16, 16, 20, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tv-entry .tv-hint {
+  top: auto;
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+
+.tv-skip {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  inset-inline-end: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-marker i::after,
+  .tv-hint {
+    animation: none;
+  }
+  .tv-canvas,
+  .tv-entry,
+  .tv-entry.is-off {
+    transition-duration: 0.01s;
+  }
+}
+
+/* ---------- interactive tour: the public page ---------- */
+
+.tour-page {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  background: #101014;
+}
+
+body:has(.tour-page) .site-foot {
+  display: none;
+}
+
+.tour-cta {
+  position: absolute;
+  z-index: 6;
+  inset-block-start: 62px;
+  inset-inline-start: 16px;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.tour-cta > * {
+  pointer-events: auto;
+}
+
+.tour-cta img {
+  max-width: 120px;
+  max-height: 46px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.5));
+}
+
+.tour-cta-main {
+  background: #fff;
+  border-color: #fff;
+  color: #101014;
+}
+
+.tour-cta-main:hover {
+  background: #fff;
+  border-color: #fff;
+  opacity: 0.9;
+}
+
+/* ---------- interactive tour: the studio sheet ---------- */
+
+.tour-entry-art {
+  flex: none;
+  width: 44px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--ivory);
+  display: grid;
+  place-items: center;
+}
+
+.ts {
+  display: grid;
+  gap: 4px;
+}
+
+.ts .sheet-lead {
+  margin: 0;
+}
+
+.ts h3 {
+  margin: 20px 0 8px;
+  font-size: 15px;
+}
+
+.ts-spaces {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ts-spaces .toggle {
+  padding: 9px 0;
+}
+
+.toggle .ts-space {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ts-space img,
+.ts-space i {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--soft);
+  flex: none;
+}
+
+.ts-pick {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin-top: 4px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--soft);
+  cursor: crosshair;
+}
+
+.ts-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ts-pin {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.35), 0 3px 12px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
+  cursor: crosshair;
+}
+
+.ts-fine {
+  margin-top: 16px;
+}
+
+.ts-stage {
+  aspect-ratio: 16 / 10;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #101014;
+}
+
+.ts-wait {
+  padding: 26px 20px;
+  border-radius: 20px;
+  background: var(--soft);
+}
+
+.ts-wait p {
+  margin: 0;
+}
+
+.ts-status {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ts-status li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.ts-status b {
+  min-width: 96px;
+  font-weight: 600;
+}
+
+.ts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ts-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--soft);
+  font-size: 13px;
+}
+
+.ts-chip .ico {
+  width: 15px;
+  height: 15px;
+  color: var(--ok);
+}
+
+.ts-chip .spinner {
+  width: 11px;
+  height: 11px;
+}
+
+.ts-chip.is-error {
+  color: var(--error);
+}
+
+.ts-chip .link {
+  color: inherit;
+  font-size: 13px;
+}
+
+.ts-share {
+  margin-top: 18px;
+  padding: 2px 16px 12px;
+  border: 1px solid var(--hair);
+  border-radius: 18px;
+  background: #fff;
+  display: grid;
+}
+
+.ts-share .toggle {
+  border-top: 0;
+}
+
+.ts-share > p {
+  margin: 12px 0 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ts-share > p small {
+  color: var(--mute);
+  font-size: 13px;
+}
+
+.ts-link {
+  display: flex;
+  gap: 8px;
+}
+
+.ts-link input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5cdbd;
+  border-radius: 10px;
+  background: var(--ivory);
+  font-size: 13.5px;
+}
+
+.ts-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.ts > .ts-foot {
+  margin-top: 16px;
+}
+
+.ts-foot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ts-cost {
+  font-weight: 600;
+}
+
+.ts-remove {
+  color: var(--error);
+  font-weight: 500;
+}
+
+@media (max-width: 759px) {
+  .ts-stage {
+    aspect-ratio: 4 / 5;
+    margin-inline: -8px;
+  }
+  .tv-title b {
+    font-size: 15.5px;
+  }
+  .tv-top {
+    padding: 12px 12px 30px;
+  }
+  .ts-link {
+    flex-wrap: wrap;
+  }
+  .ts-link input {
+    flex-basis: 100%;
+  }
+}

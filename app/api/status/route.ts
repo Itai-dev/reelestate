@@ -1,4 +1,4 @@
-import { errorMessage, fal, isJobKey, jobEndpoint, mode } from "@/lib/server";
+import { errorMessage, fal, isJobKey, isTourKey, jobEndpoint, mode } from "@/lib/server";
 import type { JobKey } from "@/lib/server";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     if (gen.status === "refunded") return Response.json({ status: "error", error: gen.error ?? "היצירה נכשלה", refunded: true } satisfies Out);
   }
 
-  const out = mode() === "mock" ? mockStatus(id) : await falStatus(model, id);
+  const out = mode() === "mock" ? mockStatus(id, model) : await falStatus(model, id);
 
   if (gen) {
     const db = supabaseAdmin();
@@ -73,11 +73,13 @@ async function falStatus(model: JobKey, id: string): Promise<Out> {
   }
 }
 
-// Simulates the queue: ~4s waiting, ~6s rendering, then a local sample clip.
-function mockStatus(id: string): Out {
-  const [, t, n] = id.split("-");
+// Simulates the queue: ~4s waiting, ~6s rendering, then a local sample clip
+// (or a drawn test image for the tour's panoramas).
+function mockStatus(id: string, model: JobKey): Out {
+  const [, t, n, tag] = id.split("-");
   const age = Date.now() - Number(t);
   if (age < 4000) return { status: "queued", position: 1 };
   if (age < 10000) return { status: "rendering" };
+  if (isTourKey(model)) return { status: "done", videoUrl: `/api/tour/mock?kind=${model}&n=${Number(n) % 6}&light=${tag ?? "day"}` };
   return { status: "done", videoUrl: `/mock/clip-${Number(n) % 3}.mp4` };
 }

@@ -141,7 +141,8 @@ export default function SiteNav() {
     const { data } = sb().auth.onAuthStateChange((_e: string, s: { user: User } | null) => read(s?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
-  if (path?.startsWith("/login")) return null;
+  // the sign-in screen and a tour shared with buyers stand on their own
+  if (path?.startsWith("/login") || path?.startsWith("/tour/")) return null;
   return (
     <nav className="nav" aria-label="ראשי">
       <div className="nav-inner">

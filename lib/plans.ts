@@ -53,6 +53,10 @@ export const CREDITS_PER_EDIT: Record<EditKey, number> = { edit720: 1, edit1080:
 // Credits charged for one interior render.
 export const CREDITS_PER_RENDER = 1;
 
+// Credits charged for one image of the interactive tour: a 360° panorama, one
+// lighting of it, or the close view the camera approach ends on.
+export const CREDITS_PER_TOUR_IMAGE = 1;
+
 // A typical reel: about 6 spaces at standard quality.
 export const CREDITS_PER_REEL = 6 * CREDITS_PER_CLIP.wan720;
 
