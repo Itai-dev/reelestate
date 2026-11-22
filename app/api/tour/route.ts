@@ -1,7 +1,7 @@
 import { errorMessage, fal, isFalMediaUrl, isTourKey, mode } from "@/lib/server";
 import { ROOMS, TOUR_IMAGES, type RoomId } from "@/lib/presets";
 import { CREDITS_PER_TOUR_IMAGE } from "@/lib/plans";
-import { CLOSEUP_PROMPT, isTourLight, lightPrompt, panoPrompt } from "@/lib/tour";
+import { CLOSEUP_PROMPT, finishPrompt, isTourLight, lightPrompt, panoPrompt } from "@/lib/tour";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -9,9 +9,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Queues one image of the interactive tour from a reference image:
-//   pano      a 360° panorama of a space, from its photo
-//   panoLight the same panorama under another light
-//   closeup   the close view of the apartment that the camera approach ends on
+//   pano       a 360° panorama of a space, from its photo
+//   panoFinish an uploaded 360° render, re-created as a photograph of the same space
+//   panoLight  a panorama under another light
+//   closeup    the close view of the apartment that the camera approach ends on
 // The prompt is written here, so the endpoint only ever makes tour images.
 export async function POST(req: Request) {
   const gate = await access(req);
@@ -27,9 +28,12 @@ export async function POST(req: Request) {
   }
 
   let prompt: string;
+  const style = typeof b?.style === "string" ? b.style.slice(0, 400) : undefined;
   if (kind === "pano") {
     const room = (ROOMS.some((r) => r.id === b?.room) ? b!.room : "other") as RoomId;
-    prompt = panoPrompt(room, typeof b?.style === "string" ? b.style.slice(0, 400) : undefined);
+    prompt = panoPrompt(room, style);
+  } else if (kind === "panoFinish") {
+    prompt = finishPrompt(style);
   } else if (kind === "panoLight") {
     if (!isTourLight(b?.light) || b.light === "day") return Response.json({ error: "בקשה חסרה" }, { status: 400 });
     prompt = lightPrompt(b.light);

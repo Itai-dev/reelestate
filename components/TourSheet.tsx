@@ -5,10 +5,11 @@ import Link from "next/link";
 import Sheet from "./Sheet";
 import Thinking from "./Thinking";
 import TourViewer from "./TourViewer";
-import { overviewOf, type TourApi } from "./useTour";
+import { overviewOf, type PanoUpload, type TourApi } from "./useTour";
+import { preparePano } from "@/lib/image";
 import { MODELS, TOUR_IMAGES, roomById, type ModelKey } from "@/lib/presets";
 import { CREDITS_PER_CLIP, CREDITS_PER_TOUR_IMAGE } from "@/lib/plans";
-import { APPROACH, CLOSEUP, TOUR_LIGHTS, TOUR_LIGHT_ORDER, isBusy, panoKey, sameEntry, type TourAsset, type TourLight } from "@/lib/tour";
+import { APPROACH, CLOSEUP, PANO_MAX_WIDTH, TOUR_LIGHTS, TOUR_LIGHT_ORDER, isBusy, panoKey, sameEntry, type TourAsset, type TourLight } from "@/lib/tour";
 import { IconCheck } from "./Icons";
 import type { Media, Shot } from "./types";
 
@@ -30,6 +31,13 @@ type Props = {
 
 const EXTRA: TourLight[] = ["morning", "sunset", "night"];
 const made = (a?: TourAsset) => Boolean(a && a.status !== "error");
+const uid = () => `u${Math.random().toString(36).slice(2, 10)}`;
+// "living_room-final.jpg" -> "living room final"
+const titleOf = (name: string) => name.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim().slice(0, 40);
+
+// A space in the setup list: a project photo, a space the tour already has, or a
+// 360° image that was just chosen and is not part of the tour yet.
+type Candidate = { id: string; title: string; img?: string; pano?: boolean; finish?: boolean; fresh?: boolean };
 
 // The interactive tour of a project: choose the spaces and lightings, optionally
 // open from the facade, then try the result, place the labels and share a link.
@@ -42,18 +50,52 @@ export default function TourSheet(p: Props) {
   const [overview, setOverview] = useState<{ blob: Blob; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [fresh, setFresh] = useState<(PanoUpload & { url: string })[]>([]);
+  const [uploadNote, setUploadNote] = useState("");
 
   const facade = p.shots.find((s) => s.room === "exterior");
 
   // every space the tour can have: the project's photos (the facade opens the
-  // tour instead), and spaces of the tour whose photo has since been removed
+  // tour instead), spaces the tour already has (from a photo that has since been
+  // removed, or from an uploaded 360° image), and 360° images chosen just now
   const candidates = useMemo(() => {
-    const list: { id: string; title: string; img?: string }[] = p.shots
+    const list: Candidate[] = p.shots
       .filter((s) => s.room !== "exterior")
       .map((s, i) => ({ id: s.id, title: tour?.spaces.find((x) => x.id === s.id)?.title ?? (s.room === "other" ? `חלל ${i + 1}` : roomById(s.room).he), img: p.media[s.id]?.img }));
-    for (const s of tour?.spaces ?? []) if (!list.some((x) => x.id === s.id)) list.push({ id: s.id, title: s.title, img: undefined });
+    for (const s of tour?.spaces ?? []) {
+      if (list.some((x) => x.id === s.id)) continue;
+      list.push({ id: s.id, title: s.title, img: s.upload ? p.api.urls[panoKey(s.id, "day")] : undefined, pano: s.upload, finish: s.finish });
+    }
+    for (const u of fresh) list.push({ id: u.id, title: u.title, img: u.url, pano: true, finish: u.finish, fresh: true });
     return list;
-  }, [p.shots, p.media, tour]);
+  }, [p.shots, p.media, tour, fresh, p.api.urls]);
+
+  // 360° images for spaces: checked to be 2:1 and sized, then listed like the photos
+  const addPanos = async (files: FileList | null) => {
+    setUploadNote("");
+    let bad = 0;
+    for (const f of Array.from(files ?? [])) {
+      const pano = await preparePano(f, PANO_MAX_WIDTH).catch(() => null);
+      if (!pano) {
+        bad++;
+        continue;
+      }
+      const id = uid();
+      setFresh((list) => [...list, { id, title: titleOf(f.name) || `חלל ${candidates.length + list.length + 1}`, blob: pano.blob, finish: true, url: URL.createObjectURL(pano.blob) }]);
+      setOn((prev) => new Set(prev).add(id));
+    }
+    if (bad) setUploadNote(`${bad === 1 ? "תמונה אחת לא נוספה" : `${bad} תמונות לא נוספו`}: תמונת 360° היא ברוחב כפול מהגובה (יחס 2:1).`);
+  };
+  const patchFresh = (id: string, patch: Partial<PanoUpload>) => setFresh((list) => list.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+  // images that were chosen but never became part of the tour are let go with the sheet
+  useEffect(() => {
+    if (p.open) return;
+    setFresh((list) => {
+      list.forEach((u) => URL.revokeObjectURL(u.url));
+      return [];
+    });
+    setUploadNote("");
+  }, [p.open]);
 
   // the form starts from the tour as it is, or from everything when there is none
   useEffect(() => {
@@ -94,7 +136,11 @@ export default function TourSheet(p: Props) {
   let images = 0;
   for (const c of chosen) {
     const old = tour?.spaces.find((s) => s.id === c.id);
-    for (const l of ["day", ...lights] as TourLight[]) if (!made(old?.panos[l])) images++;
+    for (const l of ["day", ...lights] as TourLight[]) {
+      if (made(old?.panos[l])) continue;
+      if (l === "day" && c.fresh && !c.finish) continue; // shown as it was uploaded
+      images++;
+    }
   }
   const flight = withEntry && entry.video;
   if (flight && !(kept && made(tour?.entry?.closeup))) images++;
@@ -108,14 +154,26 @@ export default function TourSheet(p: Props) {
     try {
       await p.api.make({
         spaces: chosen.map((c) => c.id),
+        uploads: fresh.filter((u) => on.has(u.id)).map(({ id, title, blob, finish }) => ({ id, title, blob, finish })),
         lights: EXTRA.filter((l) => lights.has(l)),
         entry: withEntry && facade && overview ? { shot: facade.id, fx: facade.fx, fy: facade.fy, x: entry.x, y: entry.y, overview: overview.blob, video: entry.video } : undefined,
+      });
+      setFresh((list) => {
+        list.forEach((u) => URL.revokeObjectURL(u.url));
+        return [];
       });
       setSetup(false);
     } finally {
       setStarting(false);
     }
   };
+  const toggle = (id: string, checked: boolean) =>
+    setOn((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
 
   const pick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -185,40 +243,67 @@ export default function TourSheet(p: Props) {
       {setup ? (
         <div className="ts">
           <p className="sheet-lead">
-            מהתמונות של הנכס נבנה סיור שהקונים מסתובבים בו בעצמם: מבט 360° בכל חלל, תוויות שמובילות מחלל לחלל ותצוגת תאורה מבוקר עד לילה. בסוף מקבלים קישור לשיתוף.
+            מהתמונות של הנכס, או מרינדור 360° של המודל התלת־ממדי, נבנה סיור שהקונים מסתובבים בו בעצמם: מבט 360° בכל חלל, תוויות שמובילות מחלל לחלל ותצוגת תאורה מבוקר עד לילה. בסוף מקבלים קישור לשיתוף.
           </p>
 
           <h3>החללים בסיור</h3>
           {candidates.length ? (
             <ul className="ts-spaces">
-              {candidates.map((c) => (
-                <li key={c.id}>
-                  <label className="toggle">
+              {candidates.map((c) =>
+                c.fresh ? (
+                  // a 360° image chosen just now: its name and how it is used can still be set
+                  <li key={c.id} className="toggle ts-fresh">
                     <span className="ts-space">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {c.img ? <img src={c.img} alt="" /> : <i aria-hidden />}
-                      <b>{c.title}</b>
+                      <img src={c.img} alt="" />
+                      <input className="ts-name" value={c.title} onChange={(e) => patchFresh(c.id, { title: e.target.value.slice(0, 40) })} aria-label="שם החלל" placeholder="שם החלל" />
                     </span>
-                    <input
-                      type="checkbox"
-                      role="switch"
-                      checked={on.has(c.id)}
-                      onChange={(e) =>
-                        setOn((prev) => {
-                          const next = new Set(prev);
-                          if (e.target.checked) next.add(c.id);
-                          else next.delete(c.id);
-                          return next;
-                        })
-                      }
-                    />
-                  </label>
-                </li>
-              ))}
+                    <span className="ts-fresh-actions">
+                      <button type="button" className="chip" aria-pressed={Boolean(c.finish)} onClick={() => patchFresh(c.id, { finish: !c.finish })}>
+                        גימור ב-AI
+                      </button>
+                      <input type="checkbox" role="switch" checked={on.has(c.id)} onChange={(e) => toggle(c.id, e.target.checked)} aria-label={`${c.title || "החלל"} בסיור`} />
+                    </span>
+                  </li>
+                ) : (
+                  <li key={c.id}>
+                    <label className="toggle">
+                      <span className="ts-space">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {c.img ? <img src={c.img} alt="" /> : <i aria-hidden />}
+                        <b>{c.title}</b>
+                        {c.pano && <small className="ts-tag">{c.finish ? "360° · גימור AI" : "360°"}</small>}
+                      </span>
+                      <input type="checkbox" role="switch" checked={on.has(c.id)} onChange={(e) => toggle(c.id, e.target.checked)} />
+                    </label>
+                  </li>
+                ),
+              )}
             </ul>
           ) : (
-            <p className="fine">בפרויקט יש רק תמונת חזית. מוסיפים תמונות של חללי הפנים כדי לבנות מהן סיור.</p>
+            <p className="fine">עוד אין חללים. מוסיפים לפרויקט תמונות של חללי הפנים, או מעלים כאן תמונת 360° לכל חלל.</p>
           )}
+          <label className="btn btn-outline btn-small ts-upload">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                addPanos(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            הוספת חלל מתמונת 360°
+          </label>
+          {uploadNote && (
+            <p className="error-inline" role="alert">
+              {uploadNote}
+            </p>
+          )}
+          <p className="fine">
+            רינדור מבלנדר (מצלמה Panoramic ← Equirectangular; רינדור מהיר ב-Eevee מספיק) או צילום ממצלמת 360°. הרינדור קובע את החלל בדיוק, וגימור ה-AI הופך אותו לצילום: חומרים, אור ופרטים. הוא שומר על החלל, אבל יכול לשנות פרטים קטנים כמו גוון של ריהוט. בלי גימור התמונה מוצגת כמו שהיא, בלי עלות.
+          </p>
 
           <h3>תאורה</h3>
           <div className="chips">

@@ -64,3 +64,22 @@ export async function cropToFrame(
   bmp.close();
   return { canvas: c, blob: () => canvasToBlob(c, 0.9) };
 }
+
+// A 360° image as the tour keeps it: equirectangular (twice as wide as it is
+// high), at most maxW wide, as a JPEG. Returns null for an image of any other shape.
+export async function preparePano(file: Blob, maxW: number): Promise<{ blob: Blob; w: number; h: number } | null> {
+  const bmp = await decode(file);
+  try {
+    if (!bmp.height || Math.abs(bmp.width / bmp.height - 2) > 0.06) return null;
+    const w = Math.min(maxW, bmp.width) & ~1;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = w / 2;
+    const ctx = c.getContext("2d")!;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    return { blob: await canvasToBlob(c, 0.9), w: c.width, h: c.height };
+  } finally {
+    bmp.close();
+  }
+}

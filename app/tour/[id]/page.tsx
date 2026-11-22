@@ -45,7 +45,8 @@ const read = cache(async (id: string): Promise<SharedTour | null> => {
   // only files inside this project's own folder are ever signed
   const folder = `${row.user_id}/${row.id}/`;
   const own = (p: unknown): p is string => typeof p === "string" && p.startsWith(folder) && !p.includes("..");
-  const files = Object.fromEntries(Object.entries(row.data?.files?.tour ?? {}).filter(([, p]) => own(p)));
+  const shown = (key: string) => !key.startsWith("base:") && key !== "closeup"; // working files stay private
+  const files = Object.fromEntries(Object.entries(row.data?.files?.tour ?? {}).filter(([k, p]) => shown(k) && own(p)));
   const logo = own(row.data?.files?.logo) ? row.data!.files!.logo! : undefined;
   const paths = [...new Set([...Object.values(files), ...(logo ? [logo] : [])])];
   if (!paths.length) return null;

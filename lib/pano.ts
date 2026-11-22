@@ -23,14 +23,27 @@ uniform vec2 tanHalf;
 uniform vec2 rot;
 const float PI = 3.141592653589793;
 
-// Softens the line where the left and right edges of the image meet.
+// An edge column of the image, averaged a little along its height.
+vec3 edge(sampler2D t, float x, float y) {
+  vec3 c = texture2D(t, vec2(x, y)).rgb * 0.3;
+  c += (texture2D(t, vec2(x, y - 0.012)).rgb + texture2D(t, vec2(x, y + 0.012)).rgb) * 0.2;
+  c += (texture2D(t, vec2(x, y - 0.03)).rgb + texture2D(t, vec2(x, y + 0.03)).rgb) * 0.15;
+  return c;
+}
+
+// Where the left and right edges of the image meet, each side is shifted half-way
+// toward the other's tone, fading out with distance. Only a small difference in
+// tone is evened out: the picture itself is never mixed, so nothing is doubled,
+// and where the two edges show different things the edge stays an edge.
 vec3 look(sampler2D t, vec2 uv) {
   vec3 c = texture2D(t, uv).rgb;
   float d = min(uv.x, 1.0 - uv.x);
-  const float w = 0.012;
+  const float w = 0.03;
   if (d < w) {
-    vec3 m = texture2D(t, vec2(1.0 - uv.x, uv.y)).rgb;
-    c = mix(0.5 * (c + m), c, smoothstep(0.0, w, d));
+    vec3 l = edge(t, 0.9996, uv.y);
+    vec3 r = edge(t, 0.0004, uv.y);
+    vec3 off = clamp(0.5 * (uv.x < 0.5 ? l - r : r - l), -0.045, 0.045);
+    c += off * (1.0 - smoothstep(0.0, w, d));
   }
   return c;
 }
