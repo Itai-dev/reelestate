@@ -7789,3 +7789,17 @@ body:has(.tour-page) .site-foot {
 .toggle input.ts-name::after {
   content: none;
 }
+
+/* long names of uploaded spaces wrap instead of pushing the sheet wider */
+.ts {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ts-space b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ts-space .ts-tag {
+  flex: none;
+}

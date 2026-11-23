@@ -240,39 +240,21 @@ export function useTour(a: Args) {
   // kept as they are, so only what is new is made (and paid for).
   const make = useCallback(
     async (plan: TourPlan) => {
-      const prev = ref.current;
+      const before = ref.current;
       const shots = args.current.shots();
-      const spaces: TourSpace[] = [];
-      for (const id of plan.spaces) {
-        const old = prev?.spaces.find((s) => s.id === id);
-        const shot = shots.find((s) => s.id === id);
-        const up = old ? undefined : plan.uploads?.find((u) => u.id === id);
-        if (!old && !shot && !up) continue;
-        const panos: TourSpace["panos"] = { ...old?.panos };
-        if (up) {
-          await save(localKey(baseKey(id)), up.blob);
-          if (!up.finish) {
-            // the upload is the daylight panorama, as it is
-            await save(localKey(panoKey(id, "day")), up.blob);
-            setUrl(panoKey(id, "day"), up.blob);
-            panos.day = { status: "done", v: `upload:${Date.now()}` };
-          }
+      const stamp = `upload:${Date.now()}`;
+
+      // First the files, which take time; the tour itself is rebuilt afterwards
+      // from the state as it is then, so nothing that finished meanwhile is lost.
+      const fresh = (plan.uploads ?? []).filter((u) => plan.spaces.includes(u.id) && !before?.spaces.some((s) => s.id === u.id));
+      for (const up of fresh) {
+        await save(localKey(baseKey(up.id)), up.blob);
+        if (!up.finish) {
+          // the upload is the daylight panorama, as it is
+          await save(localKey(panoKey(up.id, "day")), up.blob);
+          setUrl(panoKey(up.id, "day"), up.blob);
         }
-        for (const l of ["day", ...plan.lights] as TourLight[]) {
-          if (!panos[l] || panos[l]!.status === "error") panos[l] = { ...WAITING };
-        }
-        const fallback = `חלל ${spaces.length + 1}`;
-        spaces.push({
-          id,
-          room: old?.room ?? shot?.room ?? "other",
-          title: old?.title ?? (up ? up.title.trim() || fallback : shot!.room === "other" ? fallback : roomById(shot!.room).he),
-          yaw: old?.yaw ?? 0,
-          panos,
-          links: old?.links ?? [],
-          ...(old?.upload || up ? { upload: true, finish: old ? old.finish : up!.finish } : {}),
-        });
       }
-      let entry = prev?.entry;
       const dropFlight = async () => {
         await remove(localKey(CLOSEUP));
         await remove(localKey(APPROACH));
@@ -280,36 +262,62 @@ export function useTour(a: Args) {
         setUrl(APPROACH, null);
         uploaded.current.delete(OVERVIEW);
       };
-      if (plan.entry) {
-        const e = plan.entry;
+      const e = plan.entry;
+      // another photo, framing or apartment: the old flight no longer fits
+      const keepEntry = Boolean(e && before?.entry && sameEntry(before.entry, e));
+      if (e) {
         await save(localKey(OVERVIEW), e.overview);
         setUrl(OVERVIEW, e.overview);
-        if (!entry || !sameEntry(entry, e)) {
-          // another photo, framing or apartment: the old flight no longer fits
-          await dropFlight();
-          entry = { shot: e.shot, fx: e.fx, fy: e.fy, x: e.x, y: e.y };
-        }
-        if (e.video) {
-          const keep = (x?: TourAsset) => (x && x.status !== "error" ? x : { ...WAITING });
-          entry = { ...entry, closeup: keep(entry.closeup), video: keep(entry.video) };
-        }
-      } else if (entry) {
+        if (!keepEntry) await dropFlight();
+      } else if (before?.entry) {
         await dropFlight();
         await remove(localKey(OVERVIEW));
         setUrl(OVERVIEW, null);
-        entry = undefined;
       }
       // files of spaces that are no longer part of the tour
-      for (const s of prev?.spaces ?? []) {
-        if (plan.spaces.includes(s.id)) continue;
+      for (const sp of before?.spaces ?? []) {
+        if (plan.spaces.includes(sp.id)) continue;
         for (const l of ["morning", "day", "sunset", "night"] as const) {
-          await remove(localKey(panoKey(s.id, l)));
-          setUrl(panoKey(s.id, l), null);
+          await remove(localKey(panoKey(sp.id, l)));
+          setUrl(panoKey(sp.id, l), null);
         }
-        await remove(localKey(baseKey(s.id)));
-        uploaded.current.delete(baseKey(s.id));
+        await remove(localKey(baseKey(sp.id)));
+        uploaded.current.delete(baseKey(sp.id));
       }
-      setTour({ spaces: chainLinks(spaces), entry, published: prev?.published });
+
+      setTour((cur) => {
+        const spaces: TourSpace[] = [];
+        for (const id of plan.spaces) {
+          const old = cur?.spaces.find((x) => x.id === id);
+          const shot = shots.find((x) => x.id === id);
+          const up = old ? undefined : fresh.find((u) => u.id === id);
+          if (!old && !shot && !up) continue;
+          const panos: TourSpace["panos"] = { ...old?.panos };
+          if (up && !up.finish) panos.day = { status: "done", v: stamp };
+          for (const l of ["day", ...plan.lights] as TourLight[]) {
+            if (!panos[l] || panos[l]!.status === "error") panos[l] = { ...WAITING };
+          }
+          const fallback = `חלל ${spaces.length + 1}`;
+          spaces.push({
+            id,
+            room: old?.room ?? shot?.room ?? "other",
+            title: old?.title ?? (up ? up.title.trim() || fallback : shot!.room === "other" ? fallback : roomById(shot!.room).he),
+            yaw: old?.yaw ?? 0,
+            panos,
+            links: old?.links ?? [],
+            ...(old?.upload || up ? { upload: true, finish: old ? old.finish : up!.finish } : {}),
+          });
+        }
+        let entry: Tour["entry"];
+        if (e) {
+          entry = keepEntry && cur?.entry ? cur.entry : { shot: e.shot, fx: e.fx, fy: e.fy, x: e.x, y: e.y };
+          if (e.video) {
+            const keep = (x?: TourAsset) => (x && x.status !== "error" ? x : { ...WAITING });
+            entry = { ...entry, closeup: keep(entry.closeup), video: keep(entry.video) };
+          }
+        }
+        return { spaces: chainLinks(spaces), entry, published: cur?.published };
+      });
     },
     [setUrl],
   );

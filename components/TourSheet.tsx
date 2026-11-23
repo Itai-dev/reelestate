@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { load, remove, save } from "@/lib/store";
 import Link from "next/link";
 import Sheet from "./Sheet";
 import Thinking from "./Thinking";
@@ -52,6 +53,9 @@ export default function TourSheet(p: Props) {
   const [starting, setStarting] = useState(false);
   const [fresh, setFresh] = useState<(PanoUpload & { url: string })[]>([]);
   const [uploadNote, setUploadNote] = useState("");
+  const [preparing, setPreparing] = useState(0);
+  const [restored, setRestored] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const facade = p.shots.find((s) => s.room === "exterior");
 
@@ -72,36 +76,61 @@ export default function TourSheet(p: Props) {
 
   // 360° images for spaces: checked to be 2:1 and sized, then listed like the photos
   const addPanos = async (files: FileList | null) => {
+    const list = Array.from(files ?? []);
+    if (!list.length) return;
     setUploadNote("");
-    let bad = 0;
-    for (const f of Array.from(files ?? [])) {
-      const pano = await preparePano(f, PANO_MAX_WIDTH).catch(() => null);
-      if (!pano) {
-        bad++;
-        continue;
+    setPreparing((n) => n + list.length);
+    let bad = 0, unreadable = 0;
+    for (const f of list) {
+      try {
+        const pano = await preparePano(f, PANO_MAX_WIDTH);
+        if (!pano) bad++;
+        else {
+          const id = uid();
+          setFresh((cur) => [...cur, { id, title: titleOf(f.name) || `חלל ${candidates.length + cur.length + 1}`, blob: pano.blob, finish: true, url: URL.createObjectURL(pano.blob) }]);
+          setOn((prev) => new Set(prev).add(id));
+        }
+      } catch {
+        unreadable++;
+      } finally {
+        setPreparing((n) => n - 1);
       }
-      const id = uid();
-      setFresh((list) => [...list, { id, title: titleOf(f.name) || `חלל ${candidates.length + list.length + 1}`, blob: pano.blob, finish: true, url: URL.createObjectURL(pano.blob) }]);
-      setOn((prev) => new Set(prev).add(id));
     }
-    if (bad) setUploadNote(`${bad === 1 ? "תמונה אחת לא נוספה" : `${bad} תמונות לא נוספו`}: תמונת 360° היא ברוחב כפול מהגובה (יחס 2:1).`);
+    const count = (n: number) => (n === 1 ? "תמונה אחת לא נוספה" : `${n} תמונות לא נוספו`);
+    const notes: string[] = [];
+    if (bad) notes.push(`${count(bad)}: תמונת 360° היא ברוחב כפול מהגובה (יחס 2:1).`);
+    if (unreadable) notes.push(`${count(unreadable)}: הקובץ לא נפתח כתמונה. מעלים קובץ JPG או PNG.`);
+    setUploadNote(notes.join(" "));
   };
   const patchFresh = (id: string, patch: Partial<PanoUpload>) => setFresh((list) => list.map((u) => (u.id === id ? { ...u, ...patch } : u)));
-  // images that were chosen but never became part of the tour are let go with the sheet
+  // Images that were chosen but are not part of the tour yet are kept in the
+  // browser, so signing in or buying credits on the way does not lose them.
   useEffect(() => {
-    if (p.open) return;
-    setFresh((list) => {
-      list.forEach((u) => URL.revokeObjectURL(u.url));
-      return [];
+    let alive = true;
+    load<PanoUpload[]>("tour:fresh").then((kept) => {
+      if (!alive) return;
+      if (kept?.length) {
+        setFresh(kept.map((u) => ({ ...u, url: URL.createObjectURL(u.blob) })));
+        setOn((prev) => new Set([...prev, ...kept.map((u) => u.id)]));
+      }
+      setRestored(true);
     });
-    setUploadNote("");
-  }, [p.open]);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!restored) return;
+    if (fresh.length) save("tour:fresh", fresh.map(({ id, title, blob, finish }) => ({ id, title, blob, finish })));
+    else remove("tour:fresh");
+  }, [fresh, restored]);
 
   // the form starts from the tour as it is, or from everything when there is none
   useEffect(() => {
     if (!p.open) return;
     setSetup(!tour);
-    setOn(new Set(tour ? tour.spaces.map((s) => s.id) : candidates.map((c) => c.id)));
+    setOn(new Set([...(tour ? tour.spaces.map((s) => s.id) : candidates.map((c) => c.id)), ...fresh.map((u) => u.id)]));
+    setUploadNote("");
     setLights(new Set(tour ? EXTRA.filter((l) => tour.spaces.some((s) => s.panos[l])) : EXTRA));
     setEntry(tour ? { use: Boolean(tour.entry), x: tour.entry?.x ?? 0.5, y: tour.entry?.y ?? 0.4, video: tour.entry ? Boolean(tour.entry.video) : true } : { use: true, x: 0.5, y: 0.4, video: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,7 +167,7 @@ export default function TourSheet(p: Props) {
     const old = tour?.spaces.find((s) => s.id === c.id);
     for (const l of ["day", ...lights] as TourLight[]) {
       if (made(old?.panos[l])) continue;
-      if (l === "day" && c.fresh && !c.finish) continue; // shown as it was uploaded
+      if (l === "day" && c.pano && !c.finish) continue; // shown as it was uploaded: nothing is made
       images++;
     }
   }
@@ -151,17 +180,17 @@ export default function TourSheet(p: Props) {
 
   const start = async () => {
     setStarting(true);
+    const sent = fresh.filter((u) => on.has(u.id));
     try {
       await p.api.make({
         spaces: chosen.map((c) => c.id),
-        uploads: fresh.filter((u) => on.has(u.id)).map(({ id, title, blob, finish }) => ({ id, title, blob, finish })),
+        uploads: sent.map(({ id, title, blob, finish }) => ({ id, title, blob, finish })),
         lights: EXTRA.filter((l) => lights.has(l)),
         entry: withEntry && facade && overview ? { shot: facade.id, fx: facade.fx, fy: facade.fy, x: entry.x, y: entry.y, overview: overview.blob, video: entry.video } : undefined,
       });
-      setFresh((list) => {
-        list.forEach((u) => URL.revokeObjectURL(u.url));
-        return [];
-      });
+      // what was sent is part of the tour now; what was switched off stays for later
+      sent.forEach((u) => URL.revokeObjectURL(u.url));
+      setFresh((list) => list.filter((u) => !sent.includes(u)));
       setSetup(false);
     } finally {
       setStarting(false);
@@ -211,7 +240,7 @@ export default function TourSheet(p: Props) {
     );
   else
     action = (
-      <button type="button" className="btn btn-primary" onClick={start} disabled={!chosen.length || starting}>
+      <button type="button" className="btn btn-primary" onClick={start} disabled={!chosen.length || starting || preparing > 0}>
         {tour ? "עדכון הסיור" : "יצירת הסיור"}
       </button>
     );
@@ -283,26 +312,32 @@ export default function TourSheet(p: Props) {
           ) : (
             <p className="fine">עוד אין חללים. מוסיפים לפרויקט תמונות של חללי הפנים, או מעלים כאן תמונת 360° לכל חלל.</p>
           )}
-          <label className="btn btn-outline btn-small ts-upload">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(e) => {
-                addPanos(e.target.files);
-                e.target.value = "";
-              }}
-            />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              addPanos(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <button type="button" className="btn btn-outline btn-small ts-upload" onClick={() => fileRef.current?.click()}>
             הוספת חלל מתמונת 360°
-          </label>
+          </button>
+          {preparing > 0 && (
+            <p className="fine" role="status">
+              מכין {preparing === 1 ? "תמונה אחת" : `${preparing} תמונות`}…
+            </p>
+          )}
           {uploadNote && (
             <p className="error-inline" role="alert">
               {uploadNote}
             </p>
           )}
           <p className="fine">
-            רינדור מבלנדר (מצלמה Panoramic ← Equirectangular; רינדור מהיר ב-Eevee מספיק) או צילום ממצלמת 360°. הרינדור קובע את החלל בדיוק, וגימור ה-AI הופך אותו לצילום: חומרים, אור ופרטים. הוא שומר על החלל, אבל יכול לשנות פרטים קטנים כמו גוון של ריהוט. בלי גימור התמונה מוצגת כמו שהיא, בלי עלות.
+            רינדור מבלנדר (מצלמה מסוג Panoramic בפריסת Equirectangular; רינדור מהיר מספיק) או צילום ממצלמת 360°. הרינדור קובע את החלל בדיוק, וגימור ה-AI הופך אותו לצילום: חומרים, אור ופרטים. הוא שומר על החלל, אבל יכול לשנות פרטים קטנים כמו גוון של ריהוט. בלי גימור התמונה מוצגת כמו שהיא, בלי עלות.
           </p>
 
           <h3>תאורה</h3>
@@ -367,7 +402,7 @@ export default function TourSheet(p: Props) {
           )}
 
           <p className="fine ts-fine">
-            תמונות ה-360° נוצרות ב-AI מתוך התמונה: מה שלא נראה בה הוא השלמה ולא צילום של הנכס. לכן הסיור מסומן תמיד ״הדמיה להמחשה בלבד״.
+            כשתמונת 360° נוצרת ב-AI מתמונה רגילה, מה שלא נראה בתמונה הוא השלמה ולא צילום של הנכס. גם גימור AI של רינדור יכול לשנות פרטים. לכן הסיור מסומן תמיד ״הדמיה להמחשה בלבד״.
           </p>
         </div>
       ) : (

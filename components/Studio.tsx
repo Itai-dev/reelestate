@@ -55,7 +55,7 @@ import Thinking from "./Thinking";
 import RenderSheet from "./RenderSheet";
 import ChangeBar, { type Change } from "./ChangeBar";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
-import { download as cloudDownload, getProject, getUser, saveProject, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
+import { download as cloudDownload, getProject, getUser, saveProject, removeFiles, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
 import type { User } from "@supabase/supabase-js";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
@@ -80,6 +80,7 @@ async function clearLocal() {
     await remove(`vid:${s.id}`);
   }
   if (saved?.tour) for (const k of tourKeys(saved.tour)) await remove(localKey(k));
+  await remove("tour:fresh");
   await remove("logo");
   await remove("music");
   await remove("project");
@@ -440,7 +441,10 @@ export default function Studio() {
           f.tourSrc[key] = v;
         }
         const tourKept = new Set(tourNow.map((x) => x.key));
-        for (const k of Object.keys(f.tour)) if (!tourKept.has(k)) (delete f.tour[k], delete f.tourSrc[k]);
+        // what left the tour leaves the account too (uploads have ids of their own, so nothing would overwrite them)
+        const gone = Object.keys(f.tour).filter((k) => !tourKept.has(k));
+        await removeFiles(gone.map((k) => f.tour[k])).catch(() => {});
+        for (const k of gone) (delete f.tour[k], delete f.tourSrc[k]);
         if (logoRef.current && (dirty.current.logo || !f.logo)) {
           f.logo = await cloudUpload(`${base}/logo`, logoRef.current.blob);
           dirty.current.logo = false;
