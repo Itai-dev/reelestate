@@ -28,6 +28,10 @@ type Props = {
   balance: number;
   // the public link: who may have one, whether the account copy is up to date, and its address
   share: { user: boolean; state: "off" | "saving" | "saved" | "error"; link: string };
+  // 360° images rendered from the project's 3D model, handed over once: they join
+  // the images waiting to become spaces, and onSeeded says they were taken
+  seeds?: PanoUpload[];
+  onSeeded?: () => void;
 };
 
 const EXTRA: TourLight[] = ["morning", "sunset", "night"];
@@ -63,8 +67,10 @@ export default function TourSheet(p: Props) {
   // tour instead), spaces the tour already has (from a photo that has since been
   // removed, or from an uploaded 360° image), and 360° images chosen just now
   const candidates = useMemo(() => {
+    // a room that has a 360° image from the 3D model is listed once, as that image
+    const covered = new Set([...(tour?.spaces ?? []).map((s) => s.of), ...fresh.map((u) => u.of)]);
     const list: Candidate[] = p.shots
-      .filter((s) => s.room !== "exterior")
+      .filter((s) => s.room !== "exterior" && !covered.has(s.id))
       .map((s, i) => ({ id: s.id, title: tour?.spaces.find((x) => x.id === s.id)?.title ?? (s.room === "other" ? `חלל ${i + 1}` : roomById(s.room).he), img: p.media[s.id]?.img }));
     for (const s of tour?.spaces ?? []) {
       if (list.some((x) => x.id === s.id)) continue;
@@ -121,9 +127,24 @@ export default function TourSheet(p: Props) {
   }, []);
   useEffect(() => {
     if (!restored) return;
-    if (fresh.length) save("tour:fresh", fresh.map(({ id, title, blob, finish }) => ({ id, title, blob, finish })));
+    if (fresh.length) save("tour:fresh", fresh.map(({ url: _url, ...u }) => u));
     else remove("tour:fresh");
   }, [fresh, restored]);
+
+  // images from the 3D model replace earlier ones of the same rooms, and open the form
+  useEffect(() => {
+    if (!restored || !p.seeds?.length) return;
+    const seeds = p.seeds;
+    setFresh((cur) => {
+      const gone = cur.filter((u) => u.of && seeds.some((n) => n.of === u.of));
+      gone.forEach((u) => URL.revokeObjectURL(u.url));
+      return [...cur.filter((u) => !gone.includes(u)), ...seeds.map((u) => ({ ...u, url: URL.createObjectURL(u.blob) }))];
+    });
+    setOn((prev) => new Set([...prev, ...seeds.map((u) => u.id)]));
+    setSetup(true);
+    p.onSeeded?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.seeds, restored]);
 
   // the form starts from the tour as it is, or from everything when there is none
   useEffect(() => {
@@ -184,7 +205,7 @@ export default function TourSheet(p: Props) {
     try {
       await p.api.make({
         spaces: chosen.map((c) => c.id),
-        uploads: sent.map(({ id, title, blob, finish }) => ({ id, title, blob, finish })),
+        uploads: sent.map(({ url: _url, ...u }) => u),
         lights: EXTRA.filter((l) => lights.has(l)),
         entry: withEntry && facade && overview ? { shot: facade.id, fx: facade.fx, fy: facade.fy, x: entry.x, y: entry.y, overview: overview.blob, video: entry.video } : undefined,
       });

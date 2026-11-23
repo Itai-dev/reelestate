@@ -1,5 +1,5 @@
 import { errorMessage, fal, isFalMediaUrl, mode } from "@/lib/server";
-import { RENDERS } from "@/lib/presets";
+import { FINISH_SIZES, RENDERS } from "@/lib/presets";
 import { CREDITS_PER_RENDER } from "@/lib/plans";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -16,12 +16,14 @@ export async function POST(req: Request) {
   if (gate instanceof Response) return gate;
   const m = mode();
   if (m === "demo") return Response.json({ error: "חסר FAL_KEY" }, { status: 400 });
-  const b = (await req.json().catch(() => null)) as { prompt?: unknown; refs?: unknown; aspect?: unknown } | null;
+  const b = (await req.json().catch(() => null)) as { prompt?: unknown; refs?: unknown; aspect?: unknown; base?: unknown } | null;
   const prompt = typeof b?.prompt === "string" ? b.prompt.slice(0, 2500) : "";
   const refs = Array.isArray(b?.refs) ? b!.refs.filter(isFalMediaUrl).slice(0, 8) : [];
   const aspect = typeof b?.aspect === "string" && ASPECTS.has(b.aspect) ? b.aspect : "9:16";
   if (!prompt) return Response.json({ error: "בקשה חסרה" }, { status: 400 });
-  const key = refs.length ? "render" : "renderText";
+  // base: a picture of the 3D model of this room. The render keeps what it shows.
+  const base = isFalMediaUrl(b?.base) && aspect in FINISH_SIZES ? (b!.base as string) : null;
+  const key = base ? "renderFinish" : refs.length ? "render" : "renderText";
 
   let genId: string | null = null;
   if (gate.user) {
@@ -37,8 +39,10 @@ export async function POST(req: Request) {
   try {
     if (m === "mock") requestId = `mock-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     else {
-      const input: Record<string, unknown> = { prompt, aspect_ratio: aspect, resolution: "2K", output_format: "jpeg", num_images: 1 };
-      if (refs.length) input.image_urls = refs;
+      const input: Record<string, unknown> = base
+        ? { prompt, image_urls: [base, ...refs], image_size: FINISH_SIZES[aspect], output_format: "jpeg", num_images: 1 }
+        : { prompt, aspect_ratio: aspect, resolution: "2K", output_format: "jpeg", num_images: 1 };
+      if (!base && refs.length) input.image_urls = refs;
       const res = await fal().queue.submit(RENDERS[key].endpoint, { input: input as never });
       requestId = res.request_id;
     }

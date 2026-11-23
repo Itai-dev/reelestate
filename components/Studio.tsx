@@ -46,7 +46,7 @@ import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
 import AdsSheet from "./AdsSheet";
 import TourSheet from "./TourSheet";
-import { useTour } from "./useTour";
+import { useTour, type PanoUpload } from "./useTour";
 import { cloudName, localKey, tourFiles, tourKeys, type Tour } from "@/lib/tour";
 import { takeHandoff } from "@/lib/handoff";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor, IconTour } from "./Icons";
@@ -142,6 +142,7 @@ export default function Studio() {
   const [renderBrief, setRenderBrief] = useState("");
   const [adsOpen, setAdsOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [tourSeeds, setTourSeeds] = useState<PanoUpload[]>();
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -349,6 +350,7 @@ export default function Studio() {
     const motion = ROOMS.find((r) => r.id === room)?.motion ?? "push_in";
     setMedia((m) => ({ ...m, [id]: { img: url } }));
     setShots((prev) => [...prev, { id, room, motion, light: "day", life: false, fx: 0.5, fy: 0.5, imgW: w, imgH: h, status: "idle", render: true }]);
+    return id;
   };
 
   const removeShot = (id: string) => {
@@ -1431,6 +1433,7 @@ export default function Studio() {
         aspect={settings.aspect}
         costLine={accounts ? `{n} קרדיטים (${CREDITS_PER_RENDER} להדמיה)` : `כ-$${RENDERS.render.pricePerImage.toFixed(2)} להדמיה`}
         onAdd={addRender}
+        onPanos={setTourSeeds}
         initialBrief={renderBrief}
       />
 
@@ -1457,6 +1460,8 @@ export default function Studio() {
         accounts={accounts}
         signedIn={signedIn}
         balance={balance}
+        seeds={tourSeeds}
+        onSeeded={() => setTourSeeds(undefined)}
         share={{ user: Boolean(user), state: cloud, link: typeof location === "undefined" ? "" : `${location.origin}/tour/${pid.current}` }}
       />
 

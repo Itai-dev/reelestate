@@ -56,6 +56,12 @@ export type TourSpace = {
   // without, it is the image as it is.
   upload?: boolean;
   finish?: boolean;
+  // For a panorama rendered from the project's 3D model: the photograph of the same
+  // room (so the room is listed once), and where the panorama stands in the plan
+  // (metres, x east, y north) with the direction its centre looks in (radians,
+  // clockwise from north). Labels between such spaces point the true way.
+  of?: string;
+  at?: { x: number; y: number; heading: number };
 };
 
 export type TourEntry = {
@@ -145,11 +151,16 @@ export const isBusy = (a?: TourAsset) => a?.status === "waiting" || a?.status ==
 const NEXT = { yaw: 0.55, pitch: 0.02 };
 const PREV = { yaw: 2.6, pitch: 0.02 };
 
+const wrapYaw = (a: number) => a - 2 * Math.PI * Math.floor((a + Math.PI) / (2 * Math.PI));
+// Where the other space is, seen from this one, when both know their place in the plan.
+const toward = (from: TourSpace, to: TourSpace, fallback: { yaw: number; pitch: number }) =>
+  from.at && to.at ? { yaw: wrapYaw(Math.atan2(to.at.x - from.at.x, to.at.y - from.at.y) - from.at.heading), pitch: -0.12 } : fallback;
+
 export function chainLinks(spaces: TourSpace[]): TourSpace[] {
   return spaces.map((s, i) => {
     const want: TourLink[] = [];
-    if (spaces[i + 1]) want.push({ to: spaces[i + 1].id, ...NEXT });
-    if (spaces[i - 1]) want.push({ to: spaces[i - 1].id, ...PREV });
+    if (spaces[i + 1]) want.push({ to: spaces[i + 1].id, ...toward(s, spaces[i + 1], NEXT) });
+    if (spaces[i - 1]) want.push({ to: spaces[i - 1].id, ...toward(s, spaces[i - 1], PREV) });
     return { ...s, links: want.map((w) => s.links.find((l) => l.to === w.to) ?? w) };
   });
 }
@@ -210,7 +221,7 @@ export function finishPrompt(style?: string) {
   return [
     "This image is a 360° equirectangular panorama (2:1) of a space, rendered from a simple 3D model. Re-create it as a photorealistic architectural photograph, and keep it a seamless 360° equirectangular panorama that can be shown in a panoramic viewer.",
     "Preserve exactly: the equirectangular projection with its curved lines, the camera position, the geometry of the space, every wall, window, door and opening, the position, size, shape and colour of every piece of furniture and every object, the artwork, and the view outside.",
-    "Upgrade only the look: realistic materials and textures true to what each surface already is, soft natural daylight with believable shadows and reflections, fine construction details, and a few tasteful styling accessories on the existing surfaces.",
+    "Upgrade only the look: realistic materials and textures true to what each surface already is, soft natural daylight with believable shadows and reflections, fine construction details, and a few tasteful styling accessories on the existing surfaces. Outside the windows, turn the simple placeholder shapes into the real buildings, landscape, sea and sky they stand for, each where it already is.",
     "Do not add, remove or move furniture, walls, windows or doors. The left and right edges of the image must still join seamlessly. No people, no text, no watermark.",
     style ? `Visual style: ${style}` : "",
   ]

@@ -226,10 +226,20 @@ export const PACES: Record<Pace, { he: string; seconds: number }> = {
 };
 
 // Interior renders for projects that have no photos yet (from a plan and references).
-export type RenderKey = "render" | "renderText";
+// renderFinish: the render starts from a picture of the 3D model built from the plan,
+// and the model only makes it look like a photograph, so every room stays the same
+// apartment. It keeps the structure it is given far better than the other two.
+export type RenderKey = "render" | "renderText" | "renderFinish";
 export const RENDERS: Record<RenderKey, { endpoint: string; pricePerImage: number }> = {
   render: { endpoint: "fal-ai/nano-banana-pro/edit", pricePerImage: 0.15 },
   renderText: { endpoint: "fal-ai/nano-banana-pro", pricePerImage: 0.15 },
+  renderFinish: { endpoint: "bytedance/seedream/v5.5/edit", pricePerImage: 0.0525 },
+};
+export const FINISH_SIZES: Record<string, { width: number; height: number }> = {
+  "9:16": { width: 1440, height: 2560 },
+  "4:5": { width: 1728, height: 2160 },
+  "1:1": { width: 2048, height: 2048 },
+  "16:9": { width: 2560, height: 1440 },
 };
 
 // The interactive tour's images. One model with reference images makes them all:

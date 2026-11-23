@@ -47,7 +47,8 @@ type Args = {
 // A 360° image the owner uploads for a space: a render from a 3D model or a photo
 // from a 360° camera, already checked and sized. finish: let the model re-create
 // it as a photograph of the same space.
-export type PanoUpload = { id: string; title: string; blob: Blob; finish: boolean };
+// of, at: set when the image was rendered from the project's 3D model (see TourSpace).
+export type PanoUpload = { id: string; title: string; blob: Blob; finish: boolean; of?: string; at?: { x: number; y: number; heading: number } };
 
 export type TourPlan = {
   spaces: string[]; // ids of photos and uploads, in tour order
@@ -306,6 +307,8 @@ export function useTour(a: Args) {
             panos,
             links: old?.links ?? [],
             ...(old?.upload || up ? { upload: true, finish: old ? old.finish : up!.finish } : {}),
+            ...(old?.of || up?.of ? { of: old?.of ?? up!.of } : {}),
+            ...(old?.at || up?.at ? { at: old?.at ?? up!.at } : {}),
           });
         }
         let entry: Tour["entry"];

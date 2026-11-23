@@ -1,4 +1,5 @@
-import type { EditKey, ModelKey, TourKey } from "./presets";
+import type { EditKey, ModelKey, RenderKey, TourKey } from "./presets";
+import type { Layout } from "./layout";
 
 const PW_KEY = "reel-estate:pw";
 
@@ -60,7 +61,7 @@ export type GenStatus =
   | { status: "done"; videoUrl: string }
   | { status: "error"; error: string; refunded?: boolean };
 
-export async function checkGeneration(model: ModelKey | EditKey | "render" | "renderText" | TourKey, id: string): Promise<GenStatus> {
+export async function checkGeneration(model: ModelKey | EditKey | RenderKey | TourKey, id: string): Promise<GenStatus> {
   const q = new URLSearchParams({ model, id });
   const r = await fetch(`/api/status?${q}`, { headers: headers() });
   return json<GenStatus>(r);
@@ -126,13 +127,14 @@ export async function understand(text: string, state: unknown): Promise<{ action
 }
 
 export type PlanSpace = { room: string; title: string; scene: string };
-export async function readPlan(body: { plan?: string; refs: string[]; brief: string }): Promise<{ style: string; spaces: PlanSpace[] }> {
+export async function readPlan(body: { plan?: string; refs: string[]; brief: string }): Promise<{ style: string; spaces: PlanSpace[]; layout?: Layout | null }> {
   const r = await fetch("/api/plan", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify(body) });
   return json(r);
 }
 
-export async function startRender(prompt: string, refs: string[], aspect: string): Promise<{ requestId: string; model: "render" | "renderText" }> {
-  const r = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ prompt, refs, aspect }) });
+// base: a picture of this room from the 3D model; the render keeps what it shows.
+export async function startRender(prompt: string, refs: string[], aspect: string, base?: string): Promise<{ requestId: string; model: RenderKey }> {
+  const r = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json", ...headers() }, body: JSON.stringify({ prompt, refs, aspect, base }) });
   return json(r);
 }
 
