@@ -2,6 +2,7 @@
 
   overlay.py grid  M14 out.png             plan with a 0..1 grid and the room label anchors
   overlay.py views M14 views.json out.png  plan with each view's camera spot and viewing cone
+  overlay.py table M14                     the apartment's rooms: number, name, area, label position
 
 views.json is {"views": [{"n": "004", "cam": [x, y], "dir": deg}, ...]} (or a dict keyed by room number).
 Coordinates are fractions of the plan image (x to the right, y down); dir is clockwise from east (0 = right, 90 = down).
@@ -74,8 +75,21 @@ def views(apt, src, out):
     im.save(out)
 
 
+def table(apt):
+    f = next(x for x in json.loads((Path(__file__).parent / "src/flats.json").read_text()) if x["id"] == apt)
+    p = PLANS[apt]
+    floor = 'ground floor ("parter")' if f["floor"] == 0 else f"floor {f['floor']} (upper floor)"
+    print(f"APARTMENT {apt}: {floor}, {f['rooms']} room(s), {f['area']} m2. Plan image {p['w']} x {p['h']} px.")
+    print("Rooms (number, Polish name, area, where its label sits on the plan as x,y fractions):")
+    for r in p["rooms"]:
+        at = f"({r['pts'][0][0]:.2f}, {r['pts'][0][1]:.2f})" if r["pts"] else "not marked"
+        print(f"  {r['n']}  {r['name']}  {r['area']} m2  label anchor at {at}")
+
+
 if __name__ == "__main__":
-    if sys.argv[1] == "grid":
+    if sys.argv[1] == "table":
+        table(sys.argv[2])
+    elif sys.argv[1] == "grid":
         grid(sys.argv[2], sys.argv[3])
     else:
         views(sys.argv[2], sys.argv[3], sys.argv[4])
