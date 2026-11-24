@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DW22 — wybierz mieszkanie</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app" data-stage="map">
+
+  <!-- 1. okolica -->
+  <section class="layer map" id="map" aria-label="Okolica">
+    <div class="map-sq" id="mapSq">
+      <img src="map/z0.webp" alt="" draggable="false">
+      <img src="map/z1.webp" alt="" draggable="false">
+      <img src="map/z2.webp" alt="" draggable="false">
+      <img src="map/z3.webp" alt="" draggable="false">
+      <svg class="rings" id="rings" aria-hidden="true"></svg>
+    </div>
+    <div class="pin" aria-hidden="true"><span>DW22</span><i></i></div>
+    <p class="attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
+  </section>
+
+  <!-- 2. budynek -->
+  <section class="layer bld" id="bld" aria-label="Budynek">
+    <img class="bld-bg" id="bldBg" alt="" draggable="false">
+    <div class="bld-box" id="bldBox">
+      <img id="frame" alt="Budynek DW22" draggable="false">
+      <svg id="ov" viewBox="0 0 2000 1600" preserveAspectRatio="none"></svg>
+    </div>
+  </section>
+
+  <!-- 3. mieszkanie -->
+  <section class="layer room" id="room" aria-label="Mieszkanie">
+    <div class="view" id="viewA"><img alt="" draggable="false"></div>
+    <div class="view" id="viewB"><img alt="" draggable="false"></div>
+    <div class="planview" id="planview">
+      <div class="planview-plan" id="bigPlan"></div>
+    </div>
+  </section>
+
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <!-- stały pasek -->
+  <header class="bar">
+    <strong class="brand">DW<b>22</b></strong>
+    <nav class="steps" aria-label="Etapy">
+      <button type="button" data-go="map">Okolica</button>
+      <button type="button" data-go="bld">Budynek</button>
+      <button type="button" data-go="room" id="stepRoom" disabled>Mieszkanie</button>
+    </nav>
+  </header>
+
+  <!-- okolica: opis -->
+  <aside class="panel intro" id="intro">
+    <p class="eyebrow">Gliwice · ul. Dolnej Wsi 22</p>
+    <h1>Tylko 26 mieszkań, blisko centrum</h1>
+    <ul class="near" id="near"></ul>
+    <div class="row">
+      <button type="button" class="btn primary" id="toBld">Zobacz budynek</button>
+      <button type="button" class="btn ghost" id="replay" hidden>Pokaż okolicę jeszcze raz</button>
+    </div>
+  </aside>
+
+  <!-- budynek: filtry, obrót, karta -->
+  <div class="tools" id="tools">
+    <div class="chips" role="group" aria-label="Piętro" id="floorChips"></div>
+    <div class="chips" role="group" aria-label="Liczba pokoi" id="roomChips"></div>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="turn" id="turn">
+    <button type="button" id="turnL" aria-label="Obróć w lewo">‹</button>
+    <span>Przeciągnij, aby obrócić</span>
+    <button type="button" id="turnR" aria-label="Obróć w prawo">›</button>
+  </div>
+  <aside class="card" id="card" hidden>
+    <button type="button" class="x" id="cardX" aria-label="Zamknij">×</button>
+    <div class="card-plan" id="cardPlan"></div>
+    <div class="card-body">
+      <p class="card-top"><strong id="cardId"></strong><span class="status" id="cardStatus"></span></p>
+      <p class="card-facts" id="cardFacts"></p>
+      <div class="row">
+        <button type="button" class="btn primary" id="enter">Wejdź do środka</button>
+        <a class="btn ghost" id="cardPdf" target="_blank" rel="noopener">Karta PDF</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- mieszkanie: plan, pomieszczenia -->
+  <div class="roomhead" id="roomhead">
+    <p class="roomhead-apt" id="aptLine"></p>
+    <p class="roomhead-space" id="spaceLine"></p>
+  </div>
+  <aside class="mini" id="mini">
+    <div class="mini-plan" id="miniPlan"></div>
+    <button type="button" class="mini-zoom" id="miniZoom" aria-label="Powiększ plan">⤢</button>
+  </aside>
+  <div class="spaces" id="spaces"></div>
+  <div class="roomcta" id="roomcta">
+    <a class="btn primary" id="ask">Zapytaj o to mieszkanie</a>
+    <a class="btn ghost light" id="roomPdf" target="_blank" rel="noopener">Karta PDF</a>
+  </div>
+  <p class="note" id="note"></p>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

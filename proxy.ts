@@ -25,6 +25,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // skip static files, images, the payment provider's server callbacks and the
-  // public tour pages (their visitors have no session)
-  matcher: ["/((?!_next/static|_next/image|icon.svg|mock/|fal-media/|tour/|api/billing/notify|api/billing/webhook).*)"],
+  // public tour pages and the standalone DW22 picker (their visitors have no session)
+  matcher: ["/((?!_next/static|_next/image|icon.svg|mock/|fal-media/|tour/|dw22|api/billing/notify|api/billing/webhook).*)"],
 };
