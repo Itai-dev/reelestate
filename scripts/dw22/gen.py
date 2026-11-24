@@ -6,12 +6,12 @@ Working files live outside the repo, in a work directory (WORK, default: $DW22_W
   gen2/items/<key>.json  one file per image to generate (key = apartment-room, e.g. m14-004), with prompt and attempts
   gen2/img, gen2/prev    downloaded results and 1600 px previews
 
-  gen.py plan                      build the items from the briefs; prints {apartment: [keys]}
+  gen.py plan [APT ...]            build the items from the briefs (all, or only the named apartments); prints {apartment: [keys]}
   gen.py request <key>             print the generate_image_batch request for the item's current attempt
   gen.py fetch <key> <job> <url>   download a finished job as the current attempt
   gen.py revise <key> <fix text>   start the next attempt with corrections appended to the prompt
   gen.py revise-file <key> <path>  the same, reading the correction text from a file
-  gen.py verdict <key> pass|fail   record the review result of the current attempt
+  gen.py verdict <key> pass|fail [attempt]   record the review result (of the current attempt unless one is named)
   gen.py status                    one line per item
   gen.py install                   copy every passed image into public/dw22/rooms and write src/tours.json
 """
@@ -96,14 +96,14 @@ def compose(it):
     return f"{head}\n\nView: {it['view_text']}\n\n{STYLE[t]}{fixes}"
 
 
-def plan():
+def plan(only=()):
     media = json.loads((WORK / "brief/media.json").read_text())
     flats = {f["id"]: f for f in json.loads((HERE / "src/flats.json").read_text())}
     for d in ("items", "img", "prev"):
         (G / d).mkdir(parents=True, exist_ok=True)
     bs, groups = briefs(), {}
     for apt, b in bs.items():
-        if apt in EXISTING:
+        if apt in EXISTING or (only and apt not in only):
             continue
         for v in b["views"]:
             if v["image"] != "own":
@@ -154,9 +154,9 @@ def revise(key, fix):
     print(json.dumps({"key": key, "attempt": it["attempt"]}))
 
 
-def verdict(key, v):
+def verdict(key, v, attempt=None):
     it = load(key)
-    a = str(it["attempt"])
+    a = str(attempt or it["attempt"])
     it["attempts"][a]["verdict"] = v
     it["final"] = a if v == "pass" else it["final"]
     save(it)
@@ -194,6 +194,6 @@ def install():
 
 if __name__ == "__main__":
     cmd, a = sys.argv[1], sys.argv[2:]
-    {"plan": plan, "request": lambda: request(a[0]), "fetch": lambda: fetch(*a[:3]), "revise": lambda: revise(a[0], " ".join(a[1:])),
+    {"plan": lambda: plan(a), "request": lambda: request(a[0]), "fetch": lambda: fetch(*a[:3]), "revise": lambda: revise(a[0], " ".join(a[1:])),
      "revise-file": lambda: revise(a[0], Path(a[1]).read_text()),
-     "verdict": lambda: verdict(a[0], a[1]), "status": status, "install": install}[cmd]()
+     "verdict": lambda: verdict(*a[:3]), "status": status, "install": install}[cmd]()
