@@ -14,12 +14,6 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-  // M20 sits directly above M11 with the same layout, so it shares the same views.
-  if (byId.M11 && byId.M11.tour) {
-    byId.M11.tour.base = "m11";
-    if (byId.M20) byId.M20.tour = byId.M11.tour;
-  }
-
   const num = (n) => n.toFixed(2).replace(".", ",");
   const floorName = (f) => (f === 0 ? "parter" : f + " piętro");
   const roomsName = (n) => (n === 1 ? "1 pokój" : n + " pokoje");
@@ -277,7 +271,7 @@
   const views = [$("viewA"), $("viewB")];
   let cur = null, order = [], si = 0, vi = 0, raf = 0, lastTouch = 0;
   const pan = { x: 0, y: 0, tx: 0, ty: 0, rx: 0, ry: 0 };
-  const roomSrc = (f, n) => `rooms/${f.tour.base}-${f.tour.views[n].img}.webp`;
+  const roomSrc = (f, n) => `rooms/${f.tour.views[n].img}.webp`;
   const space = (n) => cur.spaces.find((s) => s.n === n);
 
   function enter() {
