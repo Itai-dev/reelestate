@@ -152,7 +152,7 @@
     let html = "";
     for (const id in fr) {
       const f = byId[id];
-      html += `<path d="${fr[id]}" data-id="${id}" class="${matches(f) ? "" : "off"}${id === sel ? " sel" : ""}"><title>${id} · ${facts(f)}</title></path>`;
+      html += `<path d="${fr[id]}" data-id="${id}" class="${matches(f) ? "" : "off"}${f.tour ? " ready" : ""}${id === sel ? " sel" : ""}"><title>${id} · ${facts(f)}</title></path>`;
     }
     if (sel && fr[sel]) {
       const c = shapes[fi][sel].c;
@@ -250,6 +250,7 @@
     $("cardPlan").innerHTML = `<img src="plans/${id}.webp" alt="Plan mieszkania ${id}">`;
     $("cardPdf").href = f.pdf;
     $("enter").textContent = f.tour ? "Wejdź do środka" : "Zobacz plan";
+    $("cardNote").hidden = !!f.tour;
     card.hidden = false;
     if (f.tour) f.tour.order.forEach((n) => { new Image().src = roomSrc(f, n); });
     const best = bestFrame(id), here = shapes[fi][id];
@@ -258,10 +259,14 @@
   }
   $("cardX").onclick = () => select(null);
 
+  // the building opens on an apartment that has interiors, so the first tap leads somewhere
+  const withTour = (byId.M11 && byId.M11.tour && byId.M11) || flats.find((f) => f.tour);
+  $("readyKey").hidden = !withTour || flats.every((f) => f.tour);
+
   function goBld() {
     clearTimeout(autoNext);
     if (stage === "map") zoomMap(4.4, 1100);
-    if (!frameImg.src) { setFrame(5); bldBg.src = frameSrc(0); setTimeout(() => !sel && rotateTo(0), 500); }
+    if (!frameImg.src) { setFrame(5); bldBg.src = frameSrc(0); setTimeout(() => { if (!sel) withTour ? select(withTour.id) : rotateTo(0); }, 700); }
     setStage("bld");
     preloadAll();
   }

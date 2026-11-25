@@ -47,6 +47,7 @@ p, h1, ul { margin: 0; padding: 0; }
 #ov path { fill: rgba(255, 255, 255, .1); stroke: rgba(255, 255, 255, .75); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill .2s, stroke .2s, opacity .2s; }
 #ov path.off { opacity: 0; pointer-events: none; }
 @media (hover: hover) { #ov path:hover { fill: rgba(168, 144, 95, .45); stroke: #fff; } }
+#ov path.ready { fill: rgba(168, 144, 95, .4); stroke: #fff; }
 #ov path.sel { fill: rgba(168, 144, 95, .62); stroke: #fff; stroke-width: 3.5; }
 #ov .tag rect { fill: var(--ink); }
 #ov .tag text { fill: #fff; font: 700 44px "Barlow", sans-serif; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -110,6 +111,9 @@ p, h1, ul { margin: 0; padding: 0; }
 .chips { display: flex; background: #fff; border-radius: 999px; padding: 4px; box-shadow: var(--shadow); }
 .chips button { border: 0; background: none; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
 .chips button[aria-pressed="true"] { background: var(--gold); color: #fff; }
+.count.key { display: inline-flex; align-items: center; gap: 7px; }
+.count.key i { width: 11px; height: 11px; background: var(--gold); border: 1.5px solid #fff; display: inline-block; }
+.card-note { font-size: 12.5px; color: var(--gold-d); font-weight: 600; margin: -6px 0 10px; }
 .count { background: rgba(29, 29, 27, .78); color: #fff; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px; }
 .turn { position: absolute; left: 50%; bottom: var(--pad); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: rgba(29, 29, 27, .78); color: #fff; border-radius: 999px; padding: 4px; font-size: 14px; font-weight: 500; backdrop-filter: blur(8px); }
 .turn span { white-space: nowrap; }
