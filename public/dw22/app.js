@@ -106,7 +106,8 @@
   const bld = $("bld"), box = $("bldBox"), cv = $("frame"), ctx = cv.getContext("2d"), ov = $("ov");
   const N = D.frames.length;
   const frameSrc = (i) => `frames/${String(i + 1).padStart(2, "0")}.webp`;
-  const imgs = [], ready = [], edge = [];
+  const TOP = 0.15, MID = 0.8; // where the developer's 5:4 render sits inside a square frame
+  const imgs = [], ready = [];
   let fi = 0, sel = null, started = false;
   let pos = 0, aim = 0, praf = 0, moving = false, anim = null; // pos: where the turn is, in frames (fractional while moving)
   const filter = { floor: null, rooms: null };
@@ -129,6 +130,11 @@
     return { area, c };
   }
   const shapes = D.frames.map((fr) => Object.fromEntries(Object.entries(fr).map(([id, d]) => [id, shape(d)])));
+  const mid = D.frames.map((fr) => { // horizontal centre of the building in each frame, from its outlines
+    let lo = Infinity, hi = -Infinity;
+    for (const id in fr) { const p = points(fr[id]); for (let i = 0; i < p.length; i += 2) { lo = Math.min(lo, p[i]); hi = Math.max(hi, p[i]); } }
+    return lo < hi ? (lo + hi) / 2 : 1000;
+  });
   const bestFrame = (id) => {
     let b = -1, a = 0;
     shapes.forEach((s, i) => { if (s[id] && s[id].area > a) { a = s[id].area; b = i; } });
@@ -138,23 +144,12 @@
 
   // Frames are fetched and decoded ahead, then painted on one canvas: turning never waits on a download or a decode.
   const wrap = (i) => ((i % N) + N) % N;
-  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
-  function edgeColours(i) { // average colour of the top and bottom strips, to continue the picture past its edges
-    try {
-      probe.canvas.width = 1; probe.canvas.height = 2;
-      const im = imgs[i], h = im.naturalHeight, w = im.naturalWidth;
-      probe.drawImage(im, 0, 0, w, h * 0.04, 0, 0, 1, 1);
-      probe.drawImage(im, 0, h * 0.96, w, h * 0.04, 0, 1, 1, 1);
-      const d = probe.getImageData(0, 0, 1, 2).data;
-      edge[i] = [`rgb(${d[0]},${d[1]},${d[2]})`, `rgb(${d[4]},${d[5]},${d[6]})`];
-    } catch (e) { edge[i] = null; }
-  }
   function preload(i) {
     if (imgs[i]) return imgs[i];
     const im = (imgs[i] = new Image());
     im.decoding = "async";
     im.src = frameSrc(i);
-    const done = () => { ready[i] = true; edgeColours(i); if (i === wrap(Math.round(aim)) || !started) paint(); };
+    const done = () => { ready[i] = true; if (i === wrap(Math.round(aim)) || !started) paint(); };
     (im.decode ? im.decode() : new Promise((r, j) => { im.onload = r; im.onerror = j; })).then(done, () => { im.onload = done; });
     return im;
   }
@@ -180,9 +175,12 @@
     if (i < 0) return;
     const changed = i !== fi || !started;
     fi = i; started = true;
-    ctx.drawImage(imgs[i], 0, 0, cv.width, cv.height);
-    if (edge[i]) { bld.style.setProperty("--top", edge[i][0]); bld.style.setProperty("--bot", edge[i][1]); }
-    if (changed) { drawOverlay(); if (!moving) follow(); }
+    const im = imgs[i];
+    if (im.naturalWidth > im.naturalHeight * 1.1) { // a frame without the extra scenery: only the middle band is picture
+      ctx.fillStyle = "#5f6b5a"; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(im, 0, TOP * cv.height, cv.width, MID * cv.height);
+    } else ctx.drawImage(im, 0, 0, cv.width, cv.height);
+    if (changed) { drawOverlay(); follow(); }
   }
   function request(p) { aim = p; if (!praf) praf = requestAnimationFrame(() => { praf = 0; paint(); }); }
   function drawOverlay() {
@@ -233,23 +231,26 @@
   };
   function layoutBld() {
     const w = app.clientWidth, h = app.clientHeight;
-    // the frame always fills the screen; on a tall phone that crops its sides, so the view follows the chosen apartment
-    // wide screens are always filled; a tall phone shows more of the street unless the visitor zooms in
-    const W = Math.max(w, zoomed ? h * 1.25 : Math.min(h * 1.25, w * 1.95)), H = W * 0.8;
-    box.style.width = W + "px"; box.style.height = H + "px";
-    // any strip left over goes mostly to the top, where the controls sit
-    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 + (h - H) * 0.08) + "px";
-    bld.classList.toggle("banded", H < h - 1);
-    $("zoomBtn").hidden = h * 1.25 <= w * 1.95;
+    // Frames are square: the developer's 5:4 render sits 15% from the top (TOP) and fills 80% of the height (MID),
+    // with extra scenery above and below. A wide screen is covered by the render itself; a tall phone by the whole
+    // square, which shows the street and surroundings, unless the visitor zooms in.
+    const tall = h > w;
+    const W = tall && !zoomed ? Math.max(w, h) : Math.max(w, h * 1.25);
+    box.style.width = box.style.height = W + "px";
+    // put the building (about 47% down the render) in the middle of the screen, without uncovering an edge
+    box.style.marginTop = clamp(-(TOP + MID * 0.47) * W, h / 2 - W, -h / 2) + "px";
+    $("zoomBtn").hidden = !tall;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+    const cw = Math.round(W * dpr), ch = cw;
     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; ctx.imageSmoothingQuality = "high"; if (started) paint(); }
     follow();
   }
   function follow() {
     const w = app.clientWidth, W = box.offsetWidth, spare = Math.max(0, (W - w) / 2);
-    const s = sel && shapes[fi][sel];
-    const dx = s ? clamp((0.5 - s.c[0] / 2000) * W, -spare, spare) : 0;
+    // keep the building in the middle of the screen; once the turn stops, lean toward the chosen apartment
+    const s = !moving && sel && shapes[fi][sel];
+    const cx = s ? (s.c[0] + mid[fi]) / 2 : mid[fi];
+    const dx = clamp((0.5 - cx / 2000) * W, -spare, spare);
     box.style.marginLeft = -W / 2 + dx + "px";
   }
 
@@ -365,7 +366,7 @@
     const start = () => { openRoom(f); setStage("room"); };
     if (!s || reduce) { start(); return; }
     const r = box.getBoundingClientRect(), a = app.getBoundingClientRect();
-    const ox = s.c[0] / 2000, oy = s.c[1] / 1600;
+    const ox = s.c[0] / 2000, oy = TOP + MID * (s.c[1] / 1600);
     const tx = a.left + a.width / 2 - (r.left + r.width * ox), ty = a.top + a.height / 2 - (r.top + r.height * oy);
     app.classList.add("busy");
     box.style.transformOrigin = `${ox * 100}% ${oy * 100}%`;
