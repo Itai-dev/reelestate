@@ -7,6 +7,10 @@ const FAL_HOSTS = ["v2", "v3", "v3b", "v3c"];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // the DW22 apartment picker is a standalone page in public/dw22, made to be embedded in a frame
+  async redirects() {
+    return [{ source: "/dw22", destination: "/dw22/index.html", permanent: false }];
+  },
   async rewrites() {
     return [
       ...FAL_HOSTS.map((h) => ({ source: `/fal-media/${h}/:path*`, destination: `https://${h}.fal.media/:path*` })),

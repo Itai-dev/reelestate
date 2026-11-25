@@ -1,0 +1,190 @@
+/* DW22 interactive apartment picker — standalone, made to sit in an iframe */
+:root {
+  --ink: #1d1d1b;
+  --paper: #f5f3ef;
+  --gold: #a8905f;
+  --gold-d: #8c7648;
+  --ok: #2f8f57;
+  --line: rgba(29, 29, 27, .12);
+  --shadow: 0 10px 40px rgba(20, 18, 12, .18);
+  --r: 14px;
+  --pad: clamp(12px, 2.2vw, 22px);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { font-family: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; }
+p, h1, ul { margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+#app { position: relative; width: 100%; height: 100%; min-height: 420px; overflow: hidden; background: #e9e6df; user-select: none; -webkit-user-select: none; touch-action: none; }
+.layer { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .7s ease, visibility 0s linear .7s; }
+[data-stage="map"] .map, [data-stage="bld"] .bld, [data-stage="room"] .room { opacity: 1; visibility: visible; transition: opacity .7s ease; }
+
+/* ---------- okolica ---------- */
+.map { background: #e8e6e0; }
+.map-sq { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.map-sq img { position: absolute; inset: 0; width: 100%; height: 100%; filter: grayscale(.82) contrast(.94) brightness(1.04); will-change: transform, opacity; }
+.rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.rings circle { fill: none; stroke: var(--ink); stroke-opacity: .5; stroke-width: 1.2; stroke-dasharray: 5 6; vector-effect: non-scaling-stroke; }
+.rings text { font: 600 12px "Barlow", sans-serif; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; text-anchor: middle; }
+.pin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); display: grid; justify-items: center; pointer-events: none; }
+.pin span { background: var(--ink); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 6px 12px; border-radius: 6px; font-size: 15px; box-shadow: var(--shadow); }
+.pin i { width: 12px; height: 12px; background: var(--ink); transform: translateY(-6px) rotate(45deg); }
+.pin::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--gold); animation: ping 2.2s ease-out infinite; }
+@keyframes ping { from { transform: scale(.4); opacity: 1; } to { transform: scale(3.2); opacity: 0; } }
+.attr { position: absolute; right: 6px; bottom: 4px; font-size: 10px; opacity: .7; }
+.attr a { color: inherit; }
+
+/* ---------- budynek ---------- */
+.bld { background: #cfd3cc; cursor: grab; }
+.bld.dragging { cursor: grabbing; }
+.bld-bg { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(26px) saturate(.9) brightness(.96); }
+.bld-box { position: absolute; left: 50%; top: 50%; will-change: transform; }
+.bld-box img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bld-box.fly { transition: transform 1.15s cubic-bezier(.55, 0, .85, .35); }
+#ov { position: absolute; inset: 0; width: 100%; height: 100%; }
+#ov path { fill: rgba(255, 255, 255, .1); stroke: rgba(255, 255, 255, .75); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill .2s, stroke .2s, opacity .2s; }
+#ov path.off { opacity: 0; pointer-events: none; }
+@media (hover: hover) { #ov path:hover { fill: rgba(168, 144, 95, .45); stroke: #fff; } }
+#ov path.ready { fill: rgba(168, 144, 95, .4); stroke: #fff; }
+#ov path.sel { fill: rgba(168, 144, 95, .62); stroke: #fff; stroke-width: 3.5; }
+#ov .tag rect { fill: var(--ink); }
+#ov .tag text { fill: #fff; font: 700 44px "Barlow", sans-serif; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+
+/* ---------- mieszkanie ---------- */
+.room { background: #1b1a18; cursor: grab; }
+.room.dragging { cursor: grabbing; }
+.view { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; overflow: hidden; }
+.view.on { opacity: 1; }
+.view img { position: absolute; left: 50%; top: 50%; max-width: none; will-change: transform; }
+.room::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, .42), transparent 22%, transparent 62%, rgba(0, 0, 0, .55)); }
+.room.plan-only { background: var(--paper); cursor: default; }
+.room.plan-only::after, .room.plan-only .view { display: none; }
+.planview { position: absolute; inset: 0; display: none; padding: 92px var(--pad) 150px; }
+.room.plan-only .planview { display: grid; place-items: center; }
+.planview-plan { position: relative; max-width: 100%; max-height: 100%; background: #fff; border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
+
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity .45s ease; }
+.flash.on { opacity: 1; }
+
+/* ---------- pasek ---------- */
+.bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 14px; padding: var(--pad); pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.brand { font-size: 26px; font-weight: 700; letter-spacing: -.01em; background: #fff; padding: 4px 12px; border-radius: 10px; box-shadow: var(--shadow); }
+.brand b { color: var(--gold); }
+.steps { display: flex; background: #fff; border-radius: 999px; padding: 4px; box-shadow: var(--shadow); margin-left: auto; }
+.steps button { border: 0; background: none; padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.steps button[aria-current] { background: var(--ink); color: #fff; }
+.steps button:disabled { opacity: .35; cursor: default; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid transparent; border-radius: 999px; padding: 12px 20px; font-weight: 600; font-size: 15px; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background .2s, transform .15s; }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--gold); color: #fff; }
+.btn.primary:hover { background: var(--gold-d); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn.ghost:hover { background: rgba(29, 29, 27, .06); }
+.btn.ghost.light { color: #fff; border-color: rgba(255, 255, 255, .55); background: rgba(20, 18, 12, .28); backdrop-filter: blur(8px); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* each stage shows only its own controls */
+.intro, .tools, .turn, .card, .roomhead, .mini, .spaces, .roomcta, .note { transition: opacity .45s ease, transform .45s ease, visibility 0s linear .45s; opacity: 0; visibility: hidden; }
+[data-stage="map"] .intro,
+[data-stage="bld"] .tools, [data-stage="bld"] .turn, [data-stage="bld"] .card,
+[data-stage="room"] .roomhead, [data-stage="room"] .mini, [data-stage="room"] .spaces, [data-stage="room"] .roomcta, [data-stage="room"] .note { opacity: 1; visibility: visible; transition: opacity .45s ease .25s, transform .45s ease .25s; }
+#app.busy .tools, #app.busy .turn, #app.busy .card { opacity: 0; }
+
+/* ---------- okolica: panel ---------- */
+.panel { position: absolute; background: #fff; border-radius: var(--r); box-shadow: var(--shadow); padding: clamp(16px, 2.4vw, 26px); }
+.intro { left: var(--pad); bottom: var(--pad); width: min(400px, calc(100% - 2 * var(--pad))); transform: translateY(12px); }
+[data-stage="map"] .intro { transform: none; }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-d); }
+.intro h1 { font-size: clamp(22px, 3vw, 30px); line-height: 1.12; margin: 6px 0 14px; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+.near { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-bottom: 18px; font-size: 14px; }
+.near li { display: flex; flex-direction: column; border-top: 1px solid var(--line); padding-top: 6px; }
+.near b { font-weight: 600; }
+.near span { opacity: .65; font-size: 13px; }
+
+/* ---------- budynek: narzędzia ---------- */
+.tools { position: absolute; left: var(--pad); top: calc(var(--pad) + 56px); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: calc(100% - 2 * var(--pad)); }
+.chips { display: flex; background: #fff; border-radius: 999px; padding: 4px; box-shadow: var(--shadow); }
+.chips button { border: 0; background: none; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.chips button[aria-pressed="true"] { background: var(--gold); color: #fff; }
+.count.key { display: inline-flex; align-items: center; gap: 7px; }
+.count.key i { width: 11px; height: 11px; background: var(--gold); border: 1.5px solid #fff; display: inline-block; }
+.card-note { font-size: 12.5px; color: var(--gold-d); font-weight: 600; margin: -6px 0 10px; }
+.count { background: rgba(29, 29, 27, .78); color: #fff; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px; }
+.turn { position: absolute; left: 50%; bottom: var(--pad); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: rgba(29, 29, 27, .78); color: #fff; border-radius: 999px; padding: 4px; font-size: 14px; font-weight: 500; backdrop-filter: blur(8px); }
+.turn span { white-space: nowrap; }
+.turn button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .16); color: #fff; font-size: 24px; line-height: 1; padding-bottom: 4px; }
+.turn button:hover { background: rgba(255, 255, 255, .3); }
+
+.card { position: absolute; right: var(--pad); bottom: var(--pad); width: min(430px, calc(100% - 2 * var(--pad))); background: #fff; border-radius: var(--r); box-shadow: var(--shadow); display: grid; grid-template-columns: 118px 1fr; gap: 14px; padding: 14px; }
+.card-plan { background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; place-items: center; aspect-ratio: 1; }
+.card-plan img { max-width: 100%; max-height: 100%; }
+.card-top { display: flex; align-items: baseline; gap: 10px; font-size: 26px; line-height: 1; padding-right: 26px; }
+.status { font-size: 13px; font-weight: 600; color: var(--ok); }
+.status.no { color: #9b4a3c; }
+.card-facts { font-size: 14.5px; margin: 8px 0 12px; line-height: 1.35; opacity: .8; }
+.card .btn { padding: 10px 16px; font-size: 14px; }
+.x { position: absolute; right: 8px; top: 6px; width: 32px; height: 32px; border: 0; background: none; font-size: 24px; line-height: 1; opacity: .5; border-radius: 50%; }
+.x:hover { opacity: 1; }
+
+/* ---------- mieszkanie: nakładki ---------- */
+.roomhead { position: absolute; left: var(--pad); top: calc(var(--pad) + 58px); color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, .5); pointer-events: none; }
+.roomhead-apt { font-size: 14px; font-weight: 600; opacity: .9; letter-spacing: .02em; }
+.roomhead-space { font-size: clamp(26px, 4vw, 40px); font-weight: 700; line-height: 1.1; letter-spacing: -.01em; }
+.roomhead-space small { font-size: .5em; font-weight: 500; opacity: .85; margin-left: .5em; }
+.plan-only ~ .roomhead { color: var(--ink); text-shadow: none; }
+
+.mini { position: absolute; left: var(--pad); bottom: calc(var(--pad) + 62px); width: clamp(180px, 26vw, 330px); background: #fff; border-radius: var(--r); box-shadow: var(--shadow); padding: 8px; }
+#app .mini.big { left: 50%; top: 50%; bottom: auto; width: min(92vw, 880px, 120vh); padding: 8px; transform: translate(-50%, -50%); z-index: 5; }
+.mini-plan, .planview-plan { position: relative; line-height: 0; }
+.mini-plan img, .planview-plan img { width: 100%; height: auto; display: block; }
+.planview-plan img { max-height: calc(100vh - 250px); width: auto; max-width: 100%; }
+.plan-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plan-svg .dot { fill: #fff; stroke: var(--ink); stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer; }
+.plan-svg .hit { fill: transparent; cursor: pointer; }
+.plan-svg .dot.on { fill: var(--gold); stroke: #fff; }
+.plan-svg .cone { fill: url(#coneG); pointer-events: none; }
+.plan-svg .halo { fill: var(--gold); opacity: .28; pointer-events: none; transform-box: fill-box; transform-origin: center; animation: halo 1.8s ease-in-out infinite; }
+@keyframes halo { 50% { transform: scale(1.6); opacity: .1; } }
+.mini-zoom { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 16px; line-height: 1; }
+.room.plan-only ~ .mini { display: none; }
+
+.spaces { position: absolute; left: 0; right: 0; bottom: var(--pad); display: flex; gap: 6px; padding: 0 var(--pad); overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
+.spaces::-webkit-scrollbar { display: none; }
+.spaces button { flex: none; border: 1px solid rgba(255, 255, 255, .5); background: rgba(20, 18, 12, .38); color: #fff; backdrop-filter: blur(8px); border-radius: 999px; padding: 10px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.spaces button small { font-weight: 400; opacity: .75; margin-left: 6px; }
+.spaces button[aria-current] { background: #fff; color: var(--ink); border-color: #fff; }
+.room.plan-only ~ .spaces button { background: #fff; color: var(--ink); border-color: var(--line); cursor: default; }
+.roomcta { position: absolute; right: var(--pad); top: calc(var(--pad) + 60px); display: flex; gap: 8px; flex-direction: column; align-items: stretch; }
+.room.plan-only ~ .roomcta .ghost.light { color: var(--ink); border-color: var(--line); background: #fff; }
+.note { position: absolute; right: var(--pad); bottom: calc(var(--pad) + 58px); font-size: 12px; color: #fff; background: rgba(20, 18, 12, .45); padding: 5px 10px; border-radius: 999px; backdrop-filter: blur(6px); max-width: calc(100% - 2 * var(--pad)); }
+.room.plan-only ~ .note { color: var(--ink); background: #fff; border: 1px solid var(--line); font-size: 13.5px; right: 50%; transform: translateX(50%); text-align: center; border-radius: 12px; padding: 8px 14px; }
+
+/* ---------- telefon ---------- */
+@media (max-width: 640px) {
+  .brand { font-size: 21px; padding: 4px 9px; }
+  .steps button { padding: 7px 10px; font-size: 13px; }
+  .tools { top: calc(var(--pad) + 48px); }
+  .chips button { padding: 6px 10px; font-size: 13px; }
+  .turn span { display: none; }
+  .turn { bottom: calc(var(--pad) + 2px); }
+  #app.has-card .turn { opacity: 0; visibility: hidden; }
+  .card { left: var(--pad); right: var(--pad); width: auto; grid-template-columns: 92px 1fr; gap: 12px; padding: 12px; }
+  .card-top { font-size: 23px; }
+  .near { font-size: 13px; }
+  .roomhead { top: calc(var(--pad) + 50px); }
+  .roomcta { top: auto; right: var(--pad); left: var(--pad); bottom: calc(var(--pad) + 54px); flex-direction: row; justify-content: flex-end; }
+  .roomcta .btn { padding: 9px 14px; font-size: 13.5px; }
+  .mini { left: var(--pad); bottom: calc(var(--pad) + 108px); width: min(52vw, 230px); padding: 5px; }
+  .note { bottom: auto; top: calc(var(--pad) + 122px); right: auto; left: var(--pad); }
+  .room.plan-only ~ .note { top: auto; bottom: calc(var(--pad) + 106px); left: var(--pad); right: var(--pad); transform: none; }
+  .planview { padding: 128px var(--pad) 200px; }
+  .planview-plan img { max-height: calc(100vh - 330px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .01s !important; }
+}
