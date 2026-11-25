@@ -163,7 +163,7 @@
   function setFrame(i) {
     fi = ((i % N) + N) % N;
     frameImg.src = preload(fi).src;
-    drawOverlay();
+    drawOverlay(); follow();
     clearTimeout(bgTimer);
     bgTimer = setTimeout(() => { bldBg.src = frameSrc(fi); }, 220);
   }
@@ -179,10 +179,17 @@
   }
   function layoutBld() {
     const w = app.clientWidth, h = app.clientHeight;
-    const W = Math.max(w, Math.min(h * 1.25, w * 1.5)), H = W * 0.8;
+    // the frame always fills the screen; on a tall phone that crops its sides, so the view follows the chosen apartment
+    const W = Math.max(w, h * 1.25), H = W * 0.8;
     box.style.width = W + "px"; box.style.height = H + "px";
-    box.style.marginLeft = -W / 2 + "px";
-    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 - 14) + "px";
+    box.style.marginTop = (H > h ? -0.47 * H : -H / 2) + "px";
+    follow();
+  }
+  function follow() {
+    const w = app.clientWidth, W = box.offsetWidth, spare = Math.max(0, (W - w) / 2);
+    const s = sel && shapes[fi][sel];
+    const dx = s ? clamp((0.5 - s.c[0] / 2000) * W, -spare, spare) : 0;
+    box.style.marginLeft = -W / 2 + dx + "px";
   }
 
   // drag to turn, tap to pick
@@ -240,7 +247,7 @@
     sel = id;
     const card = $("card");
     app.classList.toggle("has-card", !!id);
-    if (!id) { card.hidden = true; drawOverlay(); return; }
+    if (!id) { card.hidden = true; drawOverlay(); follow(); return; }
     const f = byId[id];
     $("cardId").textContent = id;
     const ok = f.status === "available";
@@ -254,7 +261,7 @@
     card.hidden = false;
     if (f.tour) f.tour.order.forEach((n) => { new Image().src = roomSrc(f, n); });
     const best = bestFrame(id), here = shapes[fi][id];
-    if (best.i >= 0 && (!here || here.area < best.area * 0.55)) rotateTo(best.i); else drawOverlay();
+    if (best.i >= 0 && (!here || here.area < best.area * 0.55)) rotateTo(best.i); else { drawOverlay(); follow(); }
     tell("select", { id });
   }
   $("cardX").onclick = () => select(null);

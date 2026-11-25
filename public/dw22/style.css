@@ -40,7 +40,7 @@ p, h1, ul { margin: 0; padding: 0; }
 .bld { background: #cfd3cc; cursor: grab; }
 .bld.dragging { cursor: grabbing; }
 .bld-bg { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(26px) saturate(.9) brightness(.96); }
-.bld-box { position: absolute; left: 50%; top: 50%; will-change: transform; }
+.bld-box { position: absolute; left: 50%; top: 50%; will-change: transform; transition: margin-left .35s ease; }
 .bld-box img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .bld-box.fly { transition: transform 1.15s cubic-bezier(.55, 0, .85, .35); }
 #ov { position: absolute; inset: 0; width: 100%; height: 100%; }
