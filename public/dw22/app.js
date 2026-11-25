@@ -177,12 +177,21 @@
       setFrame(fi + dir);
     }, 42);
   }
+  let zoomed = false;
+  $("zoomBtn").onclick = () => {
+    zoomed = !zoomed;
+    $("zoomBtn").textContent = zoomed ? "−" : "+";
+    $("zoomBtn").setAttribute("aria-label", zoomed ? "Oddal" : "Przybliż");
+    layoutBld();
+  };
   function layoutBld() {
     const w = app.clientWidth, h = app.clientHeight;
     // the frame always fills the screen; on a tall phone that crops its sides, so the view follows the chosen apartment
-    const W = Math.max(w, h * 1.25), H = W * 0.8;
+    // wide screens are always filled; a tall phone shows more of the street unless the visitor zooms in
+    const W = Math.max(w, zoomed ? h * 1.25 : Math.min(h * 1.25, w * 1.75)), H = W * 0.8;
     box.style.width = W + "px"; box.style.height = H + "px";
-    box.style.marginTop = (H > h ? -0.47 * H : -H / 2) + "px";
+    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 - (h - H) * 0.12) + "px";
+    $("zoomBtn").hidden = h * 1.25 <= w * 1.75;
     follow();
   }
   function follow() {
