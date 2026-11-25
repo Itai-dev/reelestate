@@ -69,10 +69,12 @@
 
   <!-- budynek: filtry, obrót, karta -->
   <div class="tools" id="tools">
-    <div class="chips" role="group" aria-label="Piętro" id="floorChips"></div>
-    <div class="chips" role="group" aria-label="Liczba pokoi" id="roomChips"></div>
-    <span class="count" id="count"></span>
+    <button type="button" class="count filterbtn" id="filterBtn" aria-expanded="false" aria-controls="filters"><span id="count"></span><b>Filtry</b></button>
     <span class="count key" id="readyKey"><i></i>z wnętrzami</span>
+    <div class="filters" id="filters" hidden>
+      <div class="chips" role="group" aria-label="Piętro" id="floorChips"></div>
+      <div class="chips" role="group" aria-label="Liczba pokoi" id="roomChips"></div>
+    </div>
   </div>
   <div class="turn" id="turn">
     <button type="button" id="turnL" aria-label="Obróć w lewo">‹</button>

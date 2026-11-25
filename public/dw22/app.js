@@ -239,9 +239,15 @@
   function count() {
     const n = flats.filter((f) => matches(f) && f.status === "available").length;
     $("count").textContent = `${n} ${flatsWord(n)}`;
+    $("filterBtn").classList.toggle("active", filter.floor !== null || filter.rooms !== null);
   }
-  chips($("floorChips"), [["Wszystkie piętra", null], ["Parter", 0], ["1", 1], ["2", 2]], "floor");
-  chips($("roomChips"), [["1 pok.", 1], ["2", 2], ["3", 3], ["4", 4]], "rooms");
+  $("filterBtn").onclick = () => {
+    const open = $("filters").hidden;
+    $("filters").hidden = !open;
+    $("filterBtn").setAttribute("aria-expanded", String(open));
+  };
+  chips($("floorChips"), [["Parter", 0], ["1 piętro", 1], ["2 piętro", 2]], "floor");
+  chips($("roomChips"), [["1 pokój", 1], ["2", 2], ["3", 3], ["4 pokoje", 4]], "rooms");
 
   function select(id) {
     sel = id;
