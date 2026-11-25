@@ -7709,3 +7709,97 @@ body:has(.tour-page) .site-foot {
     flex-basis: 100%;
   }
 }
+
+/* a space added from an uploaded 360° image */
+.ts-upload {
+  justify-self: start;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.ts-fresh {
+  cursor: default;
+  padding: 9px 0;
+}
+
+.ts-fresh .ts-space {
+  flex: 1;
+}
+
+.ts-name {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5cdbd;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.toggle .ts-fresh-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.ts-fresh-actions .chip {
+  padding: 6px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ts-space .ts-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 759px) {
+  .ts-fresh {
+    flex-wrap: wrap;
+  }
+  .ts-fresh .ts-space {
+    flex-basis: 100%;
+  }
+  .toggle .ts-fresh-actions {
+    margin-inline-start: auto;
+  }
+}
+
+/* the name of an uploaded space is a text field, not a switch */
+.toggle input.ts-name {
+  appearance: auto;
+  -webkit-appearance: auto;
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5cdbd;
+  border-radius: 10px;
+  background: #fff;
+  position: static;
+  cursor: text;
+}
+
+.toggle input.ts-name::after {
+  content: none;
+}
+
+/* long names of uploaded spaces wrap instead of pushing the sheet wider */
+.ts {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ts-space b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ts-space .ts-tag {
+  flex: none;
+}

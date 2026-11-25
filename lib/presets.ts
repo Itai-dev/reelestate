@@ -226,19 +226,31 @@ export const PACES: Record<Pace, { he: string; seconds: number }> = {
 };
 
 // Interior renders for projects that have no photos yet (from a plan and references).
-export type RenderKey = "render" | "renderText";
+// renderFinish: the render starts from a picture of the 3D model built from the plan,
+// and the model only makes it look like a photograph, so every room stays the same
+// apartment. It keeps the structure it is given far better than the other two.
+export type RenderKey = "render" | "renderText" | "renderFinish";
 export const RENDERS: Record<RenderKey, { endpoint: string; pricePerImage: number }> = {
   render: { endpoint: "fal-ai/nano-banana-pro/edit", pricePerImage: 0.15 },
   renderText: { endpoint: "fal-ai/nano-banana-pro", pricePerImage: 0.15 },
+  renderFinish: { endpoint: "bytedance/seedream/v5.5/edit", pricePerImage: 0.0525 },
+};
+export const FINISH_SIZES: Record<string, { width: number; height: number }> = {
+  "9:16": { width: 1440, height: 2560 },
+  "4:5": { width: 1728, height: 2160 },
+  "1:1": { width: 2048, height: 2048 },
+  "16:9": { width: 2560, height: 1440 },
 };
 
-// The interactive tour's images. One model with reference images makes all three:
-// the 360° panorama of a space (2:1, as large as the model allows), its relit
+// The interactive tour's images. One model with reference images makes them all:
+// the 360° panorama of a space from a photo (2:1, as large as the model allows),
+// the finished version of a 360° render that was uploaded, a panorama's relit
 // copies, and the close view of the apartment that the camera approach ends on.
-export type TourKey = "pano" | "panoLight" | "closeup";
+export type TourKey = "pano" | "panoFinish" | "panoLight" | "closeup";
 const TOUR_ENDPOINT = "bytedance/seedream/v5.5/edit";
 export const TOUR_IMAGES: Record<TourKey, { endpoint: string; width: number; height: number; pricePerImage: number }> = {
   pano: { endpoint: TOUR_ENDPOINT, width: 3040, height: 1520, pricePerImage: 0.0525 },
+  panoFinish: { endpoint: TOUR_ENDPOINT, width: 3040, height: 1520, pricePerImage: 0.0525 },
   panoLight: { endpoint: TOUR_ENDPOINT, width: 3040, height: 1520, pricePerImage: 0.0525 },
   closeup: { endpoint: TOUR_ENDPOINT, width: 2560, height: 1440, pricePerImage: 0.0525 },
 };

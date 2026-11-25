@@ -46,7 +46,7 @@ import BrandPanel from "./BrandSheet";
 import PlayerSheet from "./PlayerSheet";
 import AdsSheet from "./AdsSheet";
 import TourSheet from "./TourSheet";
-import { useTour } from "./useTour";
+import { useTour, type PanoUpload } from "./useTour";
 import { cloudName, localKey, tourFiles, tourKeys, type Tour } from "@/lib/tour";
 import { takeHandoff } from "@/lib/handoff";
 import { IconCheck, IconChevron, IconFrame, IconPlay, IconPlus, IconSpark, IconFacade, IconInterior, IconOutdoor, IconTour } from "./Icons";
@@ -55,7 +55,7 @@ import Thinking from "./Thinking";
 import RenderSheet from "./RenderSheet";
 import ChangeBar, { type Change } from "./ChangeBar";
 import { loadBrandFonts, type Brand } from "@/lib/brand";
-import { download as cloudDownload, getProject, getUser, saveProject, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
+import { download as cloudDownload, getProject, getUser, saveProject, removeFiles, sb, signInWithGoogle, upload as cloudUpload, type CloudProject } from "@/lib/cloud";
 import type { User } from "@supabase/supabase-js";
 import { promptOf, sigOf, type Info, type Media, type Settings, type Shot } from "./types";
 
@@ -80,6 +80,7 @@ async function clearLocal() {
     await remove(`vid:${s.id}`);
   }
   if (saved?.tour) for (const k of tourKeys(saved.tour)) await remove(localKey(k));
+  await remove("tour:fresh");
   await remove("logo");
   await remove("music");
   await remove("project");
@@ -141,6 +142,7 @@ export default function Studio() {
   const [renderBrief, setRenderBrief] = useState("");
   const [adsOpen, setAdsOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [tourSeeds, setTourSeeds] = useState<PanoUpload[]>();
   const [writing, setWriting] = useState(false);
   const scriptTried = useRef(false);
   const snapshots = useRef(new Map<string, { info: Info; settings: Settings; captions: Record<string, string | undefined>; videos: Record<string, string | undefined> }>());
@@ -348,6 +350,7 @@ export default function Studio() {
     const motion = ROOMS.find((r) => r.id === room)?.motion ?? "push_in";
     setMedia((m) => ({ ...m, [id]: { img: url } }));
     setShots((prev) => [...prev, { id, room, motion, light: "day", life: false, fx: 0.5, fy: 0.5, imgW: w, imgH: h, status: "idle", render: true }]);
+    return id;
   };
 
   const removeShot = (id: string) => {
@@ -440,7 +443,10 @@ export default function Studio() {
           f.tourSrc[key] = v;
         }
         const tourKept = new Set(tourNow.map((x) => x.key));
-        for (const k of Object.keys(f.tour)) if (!tourKept.has(k)) (delete f.tour[k], delete f.tourSrc[k]);
+        // what left the tour leaves the account too (uploads have ids of their own, so nothing would overwrite them)
+        const gone = Object.keys(f.tour).filter((k) => !tourKept.has(k));
+        await removeFiles(gone.map((k) => f.tour[k])).catch(() => {});
+        for (const k of gone) (delete f.tour[k], delete f.tourSrc[k]);
         if (logoRef.current && (dirty.current.logo || !f.logo)) {
           f.logo = await cloudUpload(`${base}/logo`, logoRef.current.blob);
           dirty.current.logo = false;
@@ -1427,6 +1433,7 @@ export default function Studio() {
         aspect={settings.aspect}
         costLine={accounts ? `{n} קרדיטים (${CREDITS_PER_RENDER} להדמיה)` : `כ-$${RENDERS.render.pricePerImage.toFixed(2)} להדמיה`}
         onAdd={addRender}
+        onPanos={setTourSeeds}
         initialBrief={renderBrief}
       />
 
@@ -1453,6 +1460,8 @@ export default function Studio() {
         accounts={accounts}
         signedIn={signedIn}
         balance={balance}
+        seeds={tourSeeds}
+        onSeeded={() => setTourSeeds(undefined)}
         share={{ user: Boolean(user), state: cloud, link: typeof location === "undefined" ? "" : `${location.origin}/tour/${pid.current}` }}
       />
 

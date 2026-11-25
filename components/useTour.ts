@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, checkGeneration, fetchVideo, startGeneration, startTourImage, uploadImage } from "@/lib/api";
 import { load, remove, save } from "@/lib/store";
-import { cropToFrame, decode } from "@/lib/image";
+import { cropToFrame, decode, preparePano } from "@/lib/image";
 import { roomById, type ModelKey, type TourKey } from "@/lib/presets";
 import {
   APPROACH,
@@ -12,8 +12,10 @@ import {
   CLOSEUP_ZOOM,
   OVERVIEW,
   OVERVIEW_SIZE,
+  PANO_REF_WIDTH,
   assetOf,
   assets,
+  baseKey,
   chainLinks,
   isBusy,
   localKey,
@@ -42,8 +44,15 @@ type Args = {
   onBlocked: (code: "no_credits" | "auth") => void;
 };
 
+// A 360° image the owner uploads for a space: a render from a 3D model or a photo
+// from a 360° camera, already checked and sized. finish: let the model re-create
+// it as a photograph of the same space.
+// of, at: set when the image was rendered from the project's 3D model (see TourSpace).
+export type PanoUpload = { id: string; title: string; blob: Blob; finish: boolean; of?: string; at?: { x: number; y: number; heading: number } };
+
 export type TourPlan = {
-  spaces: string[]; // shot ids, in tour order
+  spaces: string[]; // ids of photos and uploads, in tour order
+  uploads?: PanoUpload[]; // the spaces among them that are new uploads
   lights: TourLight[]; // besides daylight
   entry?: { shot: string; fx: number; fy: number; x: number; y: number; overview: Blob; video: boolean };
 };
@@ -85,6 +94,7 @@ export function useTour(a: Args) {
     for (const { key, asset } of assets(saved)) if (asset.status === "preparing") t = withAsset(t, key, { status: "error", error: "היצירה נקטעה" });
     const found: Record<string, string> = {};
     for (const { key } of tourFiles(t)) {
+      if (key.startsWith("base:")) continue; // an upload as it came in: kept, never shown
       const blob = await load<Blob>(localKey(key));
       if (blob) found[key] = URL.createObjectURL(blob);
       else if (key !== OVERVIEW) t = withAsset(t, key, { status: "error", error: "הקובץ לא נמצא במכשיר הזה" });
@@ -107,6 +117,13 @@ export function useTour(a: Args) {
     return url;
   };
   const stored = (key: string) => () => load<Blob>(localKey(key));
+  // A panorama as the model's reference: a large upload is sent smaller, so it
+  // passes through the server's upload limit.
+  const panoRef = (key: string) => async () => {
+    const b = await load<Blob>(localKey(key));
+    if (!b || b.size < 2_500_000) return b;
+    return (await preparePano(b, PANO_REF_WIDTH).catch(() => null))?.blob ?? b;
+  };
 
   const run = useCallback(async (key: string) => {
     if (starting.current.has(key)) return;
@@ -128,11 +145,23 @@ export function useTour(a: Args) {
         const [, id, light] = key.split(":");
         const space = t.spaces.find((s) => s.id === id);
         if (!space) return;
-        if (light === "day") {
+        if (light === "day" && space.upload) {
+          const base = await load<Blob>(localKey(baseKey(id)));
+          if (!base) throw new Error("תמונת ה-360° שהועלתה לא נמצאת במכשיר הזה");
+          if (!space.finish) {
+            // shown as it is: nothing to make, and nothing to pay for
+            await save(localKey(key), base);
+            setUrl(key, base);
+            patch(key, { status: "done", v: `upload:${Date.now()}`, error: undefined });
+            return;
+          }
+          const src = await refUrl(baseKey(id), panoRef(baseKey(id)));
+          job = await startTourImage({ kind: "panoFinish", imageUrl: src, style: args.current.style() });
+        } else if (light === "day") {
           const src = await refUrl(`photo:${id}`, async () => args.current.imageBlob(id));
           job = await startTourImage({ kind: "pano", imageUrl: src, room: space.room, style: args.current.style() });
         } else {
-          const src = await refUrl(`${panoKey(id, "day")}:${space.panos.day?.v}`, stored(panoKey(id, "day")));
+          const src = await refUrl(`${panoKey(id, "day")}:${space.panos.day?.v}`, panoRef(panoKey(id, "day")));
           job = await startTourImage({ kind: "panoLight", imageUrl: src, light });
         }
       }
@@ -145,7 +174,7 @@ export function useTour(a: Args) {
     } finally {
       starting.current.delete(key);
     }
-  }, [patch]);
+  }, [patch, setUrl]);
 
   // Whatever is waiting starts as soon as what it is made from exists: a
   // lighting needs the daylight panorama, the approach needs the close view.
@@ -212,27 +241,21 @@ export function useTour(a: Args) {
   // kept as they are, so only what is new is made (and paid for).
   const make = useCallback(
     async (plan: TourPlan) => {
-      const prev = ref.current;
+      const before = ref.current;
       const shots = args.current.shots();
-      const spaces: TourSpace[] = [];
-      for (const id of plan.spaces) {
-        const old = prev?.spaces.find((s) => s.id === id);
-        const shot = shots.find((s) => s.id === id);
-        if (!old && !shot) continue;
-        const panos: TourSpace["panos"] = { ...old?.panos };
-        for (const l of ["day", ...plan.lights] as TourLight[]) {
-          if (!panos[l] || panos[l]!.status === "error") panos[l] = { ...WAITING };
+      const stamp = `upload:${Date.now()}`;
+
+      // First the files, which take time; the tour itself is rebuilt afterwards
+      // from the state as it is then, so nothing that finished meanwhile is lost.
+      const fresh = (plan.uploads ?? []).filter((u) => plan.spaces.includes(u.id) && !before?.spaces.some((s) => s.id === u.id));
+      for (const up of fresh) {
+        await save(localKey(baseKey(up.id)), up.blob);
+        if (!up.finish) {
+          // the upload is the daylight panorama, as it is
+          await save(localKey(panoKey(up.id, "day")), up.blob);
+          setUrl(panoKey(up.id, "day"), up.blob);
         }
-        spaces.push({
-          id,
-          room: old?.room ?? shot!.room,
-          title: old?.title ?? (shot!.room === "other" ? `חלל ${spaces.length + 1}` : roomById(shot!.room).he),
-          yaw: old?.yaw ?? 0,
-          panos,
-          links: old?.links ?? [],
-        });
       }
-      let entry = prev?.entry;
       const dropFlight = async () => {
         await remove(localKey(CLOSEUP));
         await remove(localKey(APPROACH));
@@ -240,34 +263,64 @@ export function useTour(a: Args) {
         setUrl(APPROACH, null);
         uploaded.current.delete(OVERVIEW);
       };
-      if (plan.entry) {
-        const e = plan.entry;
+      const e = plan.entry;
+      // another photo, framing or apartment: the old flight no longer fits
+      const keepEntry = Boolean(e && before?.entry && sameEntry(before.entry, e));
+      if (e) {
         await save(localKey(OVERVIEW), e.overview);
         setUrl(OVERVIEW, e.overview);
-        if (!entry || !sameEntry(entry, e)) {
-          // another photo, framing or apartment: the old flight no longer fits
-          await dropFlight();
-          entry = { shot: e.shot, fx: e.fx, fy: e.fy, x: e.x, y: e.y };
-        }
-        if (e.video) {
-          const keep = (x?: TourAsset) => (x && x.status !== "error" ? x : { ...WAITING });
-          entry = { ...entry, closeup: keep(entry.closeup), video: keep(entry.video) };
-        }
-      } else if (entry) {
+        if (!keepEntry) await dropFlight();
+      } else if (before?.entry) {
         await dropFlight();
         await remove(localKey(OVERVIEW));
         setUrl(OVERVIEW, null);
-        entry = undefined;
       }
       // files of spaces that are no longer part of the tour
-      for (const s of prev?.spaces ?? []) {
-        if (plan.spaces.includes(s.id)) continue;
+      for (const sp of before?.spaces ?? []) {
+        if (plan.spaces.includes(sp.id)) continue;
         for (const l of ["morning", "day", "sunset", "night"] as const) {
-          await remove(localKey(panoKey(s.id, l)));
-          setUrl(panoKey(s.id, l), null);
+          await remove(localKey(panoKey(sp.id, l)));
+          setUrl(panoKey(sp.id, l), null);
         }
+        await remove(localKey(baseKey(sp.id)));
+        uploaded.current.delete(baseKey(sp.id));
       }
-      setTour({ spaces: chainLinks(spaces), entry, published: prev?.published });
+
+      setTour((cur) => {
+        const spaces: TourSpace[] = [];
+        for (const id of plan.spaces) {
+          const old = cur?.spaces.find((x) => x.id === id);
+          const shot = shots.find((x) => x.id === id);
+          const up = old ? undefined : fresh.find((u) => u.id === id);
+          if (!old && !shot && !up) continue;
+          const panos: TourSpace["panos"] = { ...old?.panos };
+          if (up && !up.finish) panos.day = { status: "done", v: stamp };
+          for (const l of ["day", ...plan.lights] as TourLight[]) {
+            if (!panos[l] || panos[l]!.status === "error") panos[l] = { ...WAITING };
+          }
+          const fallback = `חלל ${spaces.length + 1}`;
+          spaces.push({
+            id,
+            room: old?.room ?? shot?.room ?? "other",
+            title: old?.title ?? (up ? up.title.trim() || fallback : shot!.room === "other" ? fallback : roomById(shot!.room).he),
+            yaw: old?.yaw ?? 0,
+            panos,
+            links: old?.links ?? [],
+            ...(old?.upload || up ? { upload: true, finish: old ? old.finish : up!.finish } : {}),
+            ...(old?.of || up?.of ? { of: old?.of ?? up!.of } : {}),
+            ...(old?.at || up?.at ? { at: old?.at ?? up!.at } : {}),
+          });
+        }
+        let entry: Tour["entry"];
+        if (e) {
+          entry = keepEntry && cur?.entry ? cur.entry : { shot: e.shot, fx: e.fx, fy: e.fy, x: e.x, y: e.y };
+          if (e.video) {
+            const keep = (x?: TourAsset) => (x && x.status !== "error" ? x : { ...WAITING });
+            entry = { ...entry, closeup: keep(entry.closeup), video: keep(entry.video) };
+          }
+        }
+        return { spaces: chainLinks(spaces), entry, published: cur?.published };
+      });
     },
     [setUrl],
   );

@@ -44,12 +44,24 @@ export type TourAsset = {
 export type TourLink = { to: string; yaw: number; pitch: number };
 
 export type TourSpace = {
-  id: string; // the photo it was made from
+  id: string; // the photo it was made from, or an id of its own when uploaded
   room: RoomId;
   title: string;
   yaw: number; // where a visitor looks first
   panos: Partial<Record<TourLight, TourAsset>>;
   links: TourLink[];
+  // Made from a 360° image the owner uploaded (a render from a 3D model, or a
+  // photo from a 360° camera) instead of from a project photo. With finish, the
+  // daylight panorama is that image re-created photorealistically by the model;
+  // without, it is the image as it is.
+  upload?: boolean;
+  finish?: boolean;
+  // For a panorama rendered from the project's 3D model: the photograph of the same
+  // room (so the room is listed once), and where the panorama stands in the plan
+  // (metres, x east, y north) with the direction its centre looks in (radians,
+  // clockwise from north). Labels between such spaces point the true way.
+  of?: string;
+  at?: { x: number; y: number; heading: number };
 };
 
 export type TourEntry = {
@@ -73,6 +85,7 @@ export type Tour = {
 // account under `<user>/<project>/tour-<key>`.
 
 export const panoKey = (space: string, light: TourLight) => `pano:${space}:${light}`;
+export const baseKey = (space: string) => `base:${space}`; // the 360° image as it was uploaded
 export const OVERVIEW = "overview";
 export const CLOSEUP = "closeup";
 export const APPROACH = "video";
@@ -114,13 +127,14 @@ export function tourFiles(t: Tour): { key: string; v: string }[] {
   const out = assets(t)
     .filter((x) => x.asset.status === "done")
     .map((x) => ({ key: x.key, v: x.asset.v ?? "1" }));
+  for (const s of t.spaces) if (s.upload) out.push({ key: baseKey(s.id), v: "1" });
   if (t.entry) out.push({ key: OVERVIEW, v: `${t.entry.shot}:${t.entry.fx}:${t.entry.fy}` });
   return out;
 }
 
 // Every key a tour may have used, for clearing the browser copy.
 export function tourKeys(t: Tour): string[] {
-  return [...t.spaces.flatMap((s) => TOUR_LIGHT_ORDER.map((l) => panoKey(s.id, l))), OVERVIEW, CLOSEUP, APPROACH];
+  return [...t.spaces.flatMap((s) => [...TOUR_LIGHT_ORDER.map((l) => panoKey(s.id, l)), baseKey(s.id)]), OVERVIEW, CLOSEUP, APPROACH];
 }
 
 // The same overview with the apartment marked in the same place: what was made
@@ -137,11 +151,16 @@ export const isBusy = (a?: TourAsset) => a?.status === "waiting" || a?.status ==
 const NEXT = { yaw: 0.55, pitch: 0.02 };
 const PREV = { yaw: 2.6, pitch: 0.02 };
 
+const wrapYaw = (a: number) => a - 2 * Math.PI * Math.floor((a + Math.PI) / (2 * Math.PI));
+// Where the other space is, seen from this one, when both know their place in the plan.
+const toward = (from: TourSpace, to: TourSpace, fallback: { yaw: number; pitch: number }) =>
+  from.at && to.at ? { yaw: wrapYaw(Math.atan2(to.at.x - from.at.x, to.at.y - from.at.y) - from.at.heading), pitch: -0.12 } : fallback;
+
 export function chainLinks(spaces: TourSpace[]): TourSpace[] {
   return spaces.map((s, i) => {
     const want: TourLink[] = [];
-    if (spaces[i + 1]) want.push({ to: spaces[i + 1].id, ...NEXT });
-    if (spaces[i - 1]) want.push({ to: spaces[i - 1].id, ...PREV });
+    if (spaces[i + 1]) want.push({ to: spaces[i + 1].id, ...toward(s, spaces[i + 1], NEXT) });
+    if (spaces[i - 1]) want.push({ to: spaces[i - 1].id, ...toward(s, spaces[i - 1], PREV) });
     return { ...s, links: want.map((w) => s.links.find((l) => l.to === w.to) ?? w) };
   });
 }
@@ -196,6 +215,20 @@ export function panoPrompt(room: RoomId, style?: string) {
     .join(" ");
 }
 
+// For a 360° render from a 3D model (a quick one is enough): the model keeps the
+// space exactly as rendered and only makes it look like a photograph.
+export function finishPrompt(style?: string) {
+  return [
+    "This image is a 360° equirectangular panorama (2:1) of a space, rendered from a simple 3D model. Re-create it as a photorealistic architectural photograph, and keep it a seamless 360° equirectangular panorama that can be shown in a panoramic viewer.",
+    "Preserve exactly: the equirectangular projection with its curved lines, the camera position, the geometry of the space, every wall, window, door and opening, the position, size, shape and colour of every piece of furniture and every object, the artwork, and the view outside.",
+    "Upgrade only the look: realistic materials and textures true to what each surface already is, soft natural daylight with believable shadows and reflections, fine construction details, and a few tasteful styling accessories on the existing surfaces. Outside the windows, turn the simple placeholder shapes into the real buildings, landscape, sea and sky they stand for, each where it already is.",
+    "Do not add, remove or move furniture, walls, windows or doors. The left and right edges of the image must still join seamlessly. No people, no text, no watermark.",
+    style ? `Visual style: ${style}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function lightPrompt(light: TourLight) {
   return [
     `Use this 360° panorama as the reference and relight it for ${TOUR_LIGHTS[light].en}.`,
@@ -220,3 +253,7 @@ export const APPROACH_PROMPT = [
 export const CLOSEUP_ZOOM = 2.2;
 
 export const OVERVIEW_SIZE = { w: 1920, h: 1080 };
+
+// An uploaded 360° image is kept at most this wide, and sent to the model at most REF wide.
+export const PANO_MAX_WIDTH = 4096;
+export const PANO_REF_WIDTH = 3040;

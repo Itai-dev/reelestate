@@ -83,3 +83,8 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
   return out;
 }
+
+// Removes files from the account's storage (files of a tour space that was removed).
+export async function removeFiles(paths: string[]) {
+  if (paths.length) await sb().storage.from(BUCKET).remove(paths);
+}

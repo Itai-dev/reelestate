@@ -1,4 +1,4 @@
-import { errorMessage, fal, isJobKey, isTourKey, jobEndpoint, mode } from "@/lib/server";
+import { errorMessage, fal, isJobKey, isRenderKey, isTourKey, jobEndpoint, mode } from "@/lib/server";
 import type { JobKey } from "@/lib/server";
 import { access } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -81,5 +81,6 @@ function mockStatus(id: string, model: JobKey): Out {
   if (age < 4000) return { status: "queued", position: 1 };
   if (age < 10000) return { status: "rendering" };
   if (isTourKey(model)) return { status: "done", videoUrl: `/api/tour/mock?kind=${model}&n=${Number(n) % 6}&light=${tag ?? "day"}` };
+  if (isRenderKey(model)) return { status: "done", videoUrl: `/api/tour/mock?kind=closeup&n=${Number(n) % 6}` };
   return { status: "done", videoUrl: `/mock/clip-${Number(n) % 3}.mp4` };
 }
