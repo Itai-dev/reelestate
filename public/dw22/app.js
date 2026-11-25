@@ -163,7 +163,7 @@
   function setFrame(i) {
     fi = ((i % N) + N) % N;
     frameImg.src = preload(fi).src;
-    drawOverlay();
+    drawOverlay(); follow();
     clearTimeout(bgTimer);
     bgTimer = setTimeout(() => { bldBg.src = frameSrc(fi); }, 220);
   }
@@ -177,12 +177,28 @@
       setFrame(fi + dir);
     }, 42);
   }
+  let zoomed = false;
+  $("zoomBtn").onclick = () => {
+    zoomed = !zoomed;
+    $("zoomBtn").textContent = zoomed ? "−" : "+";
+    $("zoomBtn").setAttribute("aria-label", zoomed ? "Oddal" : "Przybliż");
+    layoutBld();
+  };
   function layoutBld() {
     const w = app.clientWidth, h = app.clientHeight;
-    const W = Math.max(w, Math.min(h * 1.25, w * 1.5)), H = W * 0.8;
+    // the frame always fills the screen; on a tall phone that crops its sides, so the view follows the chosen apartment
+    // wide screens are always filled; a tall phone shows more of the street unless the visitor zooms in
+    const W = Math.max(w, zoomed ? h * 1.25 : Math.min(h * 1.25, w * 1.75)), H = W * 0.8;
     box.style.width = W + "px"; box.style.height = H + "px";
-    box.style.marginLeft = -W / 2 + "px";
-    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 - 14) + "px";
+    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 - (h - H) * 0.12) + "px";
+    $("zoomBtn").hidden = h * 1.25 <= w * 1.75;
+    follow();
+  }
+  function follow() {
+    const w = app.clientWidth, W = box.offsetWidth, spare = Math.max(0, (W - w) / 2);
+    const s = sel && shapes[fi][sel];
+    const dx = s ? clamp((0.5 - s.c[0] / 2000) * W, -spare, spare) : 0;
+    box.style.marginLeft = -W / 2 + dx + "px";
   }
 
   // drag to turn, tap to pick
@@ -232,15 +248,21 @@
   function count() {
     const n = flats.filter((f) => matches(f) && f.status === "available").length;
     $("count").textContent = `${n} ${flatsWord(n)}`;
+    $("filterBtn").classList.toggle("active", filter.floor !== null || filter.rooms !== null);
   }
-  chips($("floorChips"), [["Wszystkie piętra", null], ["Parter", 0], ["1", 1], ["2", 2]], "floor");
-  chips($("roomChips"), [["1 pok.", 1], ["2", 2], ["3", 3], ["4", 4]], "rooms");
+  $("filterBtn").onclick = () => {
+    const open = $("filters").hidden;
+    $("filters").hidden = !open;
+    $("filterBtn").setAttribute("aria-expanded", String(open));
+  };
+  chips($("floorChips"), [["Parter", 0], ["1 piętro", 1], ["2 piętro", 2]], "floor");
+  chips($("roomChips"), [["1 pokój", 1], ["2", 2], ["3", 3], ["4 pokoje", 4]], "rooms");
 
   function select(id) {
     sel = id;
     const card = $("card");
     app.classList.toggle("has-card", !!id);
-    if (!id) { card.hidden = true; drawOverlay(); return; }
+    if (!id) { card.hidden = true; drawOverlay(); follow(); return; }
     const f = byId[id];
     $("cardId").textContent = id;
     const ok = f.status === "available";
@@ -254,7 +276,7 @@
     card.hidden = false;
     if (f.tour) f.tour.order.forEach((n) => { new Image().src = roomSrc(f, n); });
     const best = bestFrame(id), here = shapes[fi][id];
-    if (best.i >= 0 && (!here || here.area < best.area * 0.55)) rotateTo(best.i); else drawOverlay();
+    if (best.i >= 0 && (!here || here.area < best.area * 0.55)) rotateTo(best.i); else { drawOverlay(); follow(); }
     tell("select", { id });
   }
   $("cardX").onclick = () => select(null);
