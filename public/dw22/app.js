@@ -103,11 +103,12 @@
   $("intro").addEventListener("pointerdown", () => clearTimeout(autoNext));
 
   /* ------------------------------------------------------------------ budynek */
-  const bld = $("bld"), box = $("bldBox"), frameImg = $("frame"), bldBg = $("bldBg"), ov = $("ov");
+  const bld = $("bld"), box = $("bldBox"), cv = $("frame"), ctx = cv.getContext("2d"), ov = $("ov");
   const N = D.frames.length;
   const frameSrc = (i) => `frames/${String(i + 1).padStart(2, "0")}.webp`;
-  const loaded = [];
-  let fi = 0, sel = null, spin = 0, bgTimer = 0;
+  const imgs = [], ready = [], edge = [];
+  let fi = 0, sel = null, started = false;
+  let pos = 0, aim = 0, praf = 0, moving = false, anim = null; // pos: where the turn is, in frames (fractional while moving)
   const filter = { floor: null, rooms: null };
 
   const points = (d) => (d.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
@@ -135,18 +136,55 @@
   };
   const matches = (f) => (filter.floor === null || f.floor === filter.floor) && (filter.rooms === null || f.rooms === filter.rooms);
 
-  function preload(i) { if (!loaded[i]) { loaded[i] = new Image(); loaded[i].src = frameSrc(i); } return loaded[i]; }
-  function preloadAll() {
-    let k = 1;
-    const next = () => {
-      if (k > N / 2) return;
-      const a = preload((fi + k) % N), b = preload((fi - k + N) % N);
-      k++;
-      let left = 2; const go = () => --left || next();
-      [a, b].forEach((im) => (im.complete ? go() : (im.onload = im.onerror = go)));
-    };
-    next();
+  // Frames are fetched and decoded ahead, then painted on one canvas: turning never waits on a download or a decode.
+  const wrap = (i) => ((i % N) + N) % N;
+  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  function edgeColours(i) { // average colour of the top and bottom strips, to continue the picture past its edges
+    try {
+      probe.canvas.width = 1; probe.canvas.height = 2;
+      const im = imgs[i], h = im.naturalHeight, w = im.naturalWidth;
+      probe.drawImage(im, 0, 0, w, h * 0.04, 0, 0, 1, 1);
+      probe.drawImage(im, 0, h * 0.96, w, h * 0.04, 0, 1, 1, 1);
+      const d = probe.getImageData(0, 0, 1, 2).data;
+      edge[i] = [`rgb(${d[0]},${d[1]},${d[2]})`, `rgb(${d[4]},${d[5]},${d[6]})`];
+    } catch (e) { edge[i] = null; }
   }
+  function preload(i) {
+    if (imgs[i]) return imgs[i];
+    const im = (imgs[i] = new Image());
+    im.decoding = "async";
+    im.src = frameSrc(i);
+    const done = () => { ready[i] = true; edgeColours(i); if (i === wrap(Math.round(aim)) || !started) paint(); };
+    (im.decode ? im.decode() : new Promise((r, j) => { im.onload = r; im.onerror = j; })).then(done, () => { im.onload = done; });
+    return im;
+  }
+  function preloadAll() { // nearest frames first, four at a time
+    const order = [];
+    for (let k = 0; k <= N / 2; k++) { order.push(wrap(fi + k)); if (k) order.push(wrap(fi - k)); }
+    let at = 0;
+    const next = () => {
+      while (at < order.length && imgs[order[at]]) at++;
+      if (at >= order.length) return;
+      const im = preload(order[at++]);
+      const go = () => next();
+      if (im.complete) go(); else { im.addEventListener("load", go, { once: true }); im.addEventListener("error", go, { once: true }); }
+    };
+    for (let k = 0; k < 4; k++) next();
+  }
+  function nearestReady(i) {
+    for (let k = 0; k <= N / 2; k++) { if (ready[wrap(i + k)]) return wrap(i + k); if (ready[wrap(i - k)]) return wrap(i - k); }
+    return -1;
+  }
+  function paint() {
+    const i = nearestReady(Math.round(aim));
+    if (i < 0) return;
+    const changed = i !== fi || !started;
+    fi = i; started = true;
+    ctx.drawImage(imgs[i], 0, 0, cv.width, cv.height);
+    if (edge[i]) { bld.style.setProperty("--top", edge[i][0]); bld.style.setProperty("--bot", edge[i][1]); }
+    if (changed) { drawOverlay(); if (!moving) follow(); }
+  }
+  function request(p) { aim = p; if (!praf) praf = requestAnimationFrame(() => { praf = 0; paint(); }); }
   function drawOverlay() {
     const fr = D.frames[fi];
     let html = "";
@@ -160,22 +198,31 @@
     }
     ov.innerHTML = html;
   }
-  function setFrame(i) {
-    fi = ((i % N) + N) % N;
-    frameImg.src = preload(fi).src;
-    drawOverlay(); follow();
-    clearTimeout(bgTimer);
-    bgTimer = setTimeout(() => { bldBg.src = frameSrc(fi); }, 220);
+  function setFrame(i) { stop(); pos = wrap(i); preload(pos); request(pos); }
+  function stop() { if (anim) { cancelAnimationFrame(anim); anim = null; } }
+  function settle() { moving = false; bld.classList.remove("moving"); pos = wrap(Math.round(pos)); request(pos); follow(); }
+  function rotateTo(target, done) { // eased turn along the shorter way round
+    stop();
+    let d = wrap(target - Math.round(pos)); if (d > N / 2) d -= N;
+    if (reduce || !d) { setFrame(target); done && done(); return; }
+    const from = pos, ms = Math.min(1100, 160 + Math.abs(d) * 55), t0 = performance.now();
+    moving = true; bld.classList.add("moving");
+    const step = (now) => {
+      const t = clamp((now - t0) / ms, 0, 1);
+      pos = from + d * ease(t); request(pos);
+      if (t < 1) anim = requestAnimationFrame(step); else { anim = null; settle(); done && done(); }
+    };
+    anim = requestAnimationFrame(step);
   }
-  function rotateTo(target, done) {
-    clearInterval(spin);
-    let d = (((target - fi) % N) + N) % N;
-    const dir = d > N / 2 ? -1 : 1;
-    if (reduce) { setFrame(target); done && done(); return; }
-    spin = setInterval(() => {
-      if (fi === target) { clearInterval(spin); done && done(); return; }
-      setFrame(fi + dir);
-    }, 42);
+  function glide(v) { // keep turning after a flick, slowing down; v in frames per millisecond
+    stop();
+    let last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(48, now - last); last = now;
+      pos += v * dt; v *= Math.pow(0.9935, dt); request(pos);
+      if (Math.abs(v) > 0.003) anim = requestAnimationFrame(step); else { anim = null; settle(); }
+    };
+    anim = requestAnimationFrame(step);
   }
   let zoomed = false;
   $("zoomBtn").onclick = () => {
@@ -188,10 +235,15 @@
     const w = app.clientWidth, h = app.clientHeight;
     // the frame always fills the screen; on a tall phone that crops its sides, so the view follows the chosen apartment
     // wide screens are always filled; a tall phone shows more of the street unless the visitor zooms in
-    const W = Math.max(w, zoomed ? h * 1.25 : Math.min(h * 1.25, w * 1.75)), H = W * 0.8;
+    const W = Math.max(w, zoomed ? h * 1.25 : Math.min(h * 1.25, w * 1.95)), H = W * 0.8;
     box.style.width = W + "px"; box.style.height = H + "px";
-    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 - (h - H) * 0.12) + "px";
-    $("zoomBtn").hidden = h * 1.25 <= w * 1.75;
+    // any strip left over goes mostly to the top, where the controls sit
+    box.style.marginTop = (H > h ? -0.47 * H : -H / 2 + (h - H) * 0.08) + "px";
+    bld.classList.toggle("banded", H < h - 1);
+    $("zoomBtn").hidden = h * 1.25 <= w * 1.95;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+    if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; ctx.imageSmoothingQuality = "high"; if (started) paint(); }
     follow();
   }
   function follow() {
@@ -203,33 +255,39 @@
 
   // drag to turn, tap to pick
   let drag = null;
+  const stepPx = () => clamp(app.clientWidth / 26, 12, 40); // pixels of drag per frame
   bld.addEventListener("pointerdown", (e) => {
     if (e.button) return;
-    clearInterval(spin);
-    drag = { x: e.clientX, y: e.clientY, f: fi, moved: false, id: e.target.dataset && e.target.dataset.id };
+    const wasMoving = !!anim; stop();
+    drag = { x: e.clientX, y: e.clientY, p: pos, moved: wasMoving, id: !wasMoving && e.target.dataset && e.target.dataset.id, track: [[performance.now(), e.clientX]] };
     bld.setPointerCapture(e.pointerId);
   });
   bld.addEventListener("pointermove", (e) => {
     if (!drag) return;
     const dx = e.clientX - drag.x;
     if (!drag.moved && Math.hypot(dx, e.clientY - drag.y) < 7) return;
-    drag.moved = true; bld.classList.add("dragging");
-    const step = Math.max(12, app.clientWidth / 34);
-    const to = drag.f - Math.round(dx / step);
-    if ((((to % N) + N) % N) !== fi) setFrame(to);
+    if (!drag.moved || !moving) { drag.moved = true; moving = true; bld.classList.add("dragging", "moving"); }
+    const now = performance.now();
+    drag.track.push([now, e.clientX]);
+    while (drag.track.length > 2 && now - drag.track[0][0] > 90) drag.track.shift();
+    pos = drag.p - dx / stepPx();
+    request(pos);
   });
-  const endDrag = () => {
+  const endDrag = (e) => {
     if (!drag) return;
     bld.classList.remove("dragging");
-    if (!drag.moved) drag.id ? select(drag.id) : select(null);
-    drag = null;
+    const d = drag; drag = null;
+    if (!d.moved) { moving = false; bld.classList.remove("moving"); d.id ? select(d.id) : select(null); return; }
+    const t = d.track, a = t[0], b = [performance.now(), e ? e.clientX : t[t.length - 1][1]];
+    const v = b[0] - a[0] > 8 ? -(b[1] - a[1]) / (b[0] - a[0]) / stepPx() : 0;
+    Math.abs(v) > 0.006 && !reduce ? glide(clamp(v, -0.06, 0.06)) : settle();
   };
   bld.addEventListener("pointerup", endDrag);
-  bld.addEventListener("pointercancel", () => { drag = null; bld.classList.remove("dragging"); });
+  bld.addEventListener("pointercancel", () => endDrag());
   $("turnL").onclick = () => rotateTo((fi + 3) % N);
   $("turnR").onclick = () => rotateTo((fi - 3 + N) % N);
   addEventListener("keydown", (e) => {
-    if (stage === "bld" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) setFrame(fi + (e.key === "ArrowLeft" ? 1 : -1));
+    if (stage === "bld" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) rotateTo(wrap(fi + (e.key === "ArrowLeft" ? 1 : -1)));
     if (stage === "room" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) stepSpace(e.key === "ArrowLeft" ? -1 : 1);
     if (e.key === "Escape") { $("mini").classList.remove("big"); if (stage === "bld") select(null); }
   });
@@ -288,7 +346,7 @@
   function goBld() {
     clearTimeout(autoNext);
     if (stage === "map") zoomMap(4.4, 1100);
-    if (!frameImg.src) { setFrame(5); bldBg.src = frameSrc(0); setTimeout(() => { if (!sel) withTour ? select(withTour.id) : rotateTo(0); }, 700); }
+    if (!started) { setFrame(5); setTimeout(() => { if (!sel) withTour ? select(withTour.id) : rotateTo(0); }, 700); }
     setStage("bld");
     preloadAll();
   }
