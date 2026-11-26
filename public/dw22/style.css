@@ -37,13 +37,14 @@ p, h1, ul { margin: 0; padding: 0; }
 .attr a { color: inherit; }
 
 /* ---------- budynek ---------- */
-.bld { background: #cfd3cc; cursor: grab; }
+.bld { background: #5f6b5a; cursor: grab; touch-action: none; }
 .bld.dragging { cursor: grabbing; }
-.bld-bg { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(26px) saturate(.9) brightness(.96); }
 .bld-box { position: absolute; left: 50%; top: 50%; will-change: transform; transition: margin-left .35s ease, width .35s ease, height .35s ease, margin-top .35s ease; }
-.bld-box img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bld-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bld.moving .bld-box { transition: none; }
+.bld.moving #ov path { transition: none; }
 .bld-box.fly { transition: transform 1.15s cubic-bezier(.55, 0, .85, .35); }
-#ov { position: absolute; inset: 0; width: 100%; height: 100%; }
+#ov { position: absolute; left: 0; top: 15%; width: 100%; height: 80%; }
 #ov path { fill: rgba(255, 255, 255, .1); stroke: rgba(255, 255, 255, .75); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill .2s, stroke .2s, opacity .2s; }
 #ov path.off { opacity: 0; pointer-events: none; }
 @media (hover: hover) { #ov path:hover { fill: rgba(168, 144, 95, .45); stroke: #fff; } }
